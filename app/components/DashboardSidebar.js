@@ -1,0 +1,50 @@
+"use client";
+
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { User, Package, MapPin, CreditCard, Heart, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+
+export default function DashboardSidebar() {
+    const pathname = usePathname();
+    const { user, logout } = useAuth();
+
+    const isActive = (path) => pathname === path || pathname.startsWith(path + '/');
+
+    return (
+        <aside className="dashboard-sidebar">
+            <div className="user-profile-summary">
+                <div className="avatar-circle">
+                    {user?.name ? user.name.substring(0, 2).toUpperCase() : 'JP'}
+                </div>
+                <div className="user-info">
+                    <h3>{user?.name || 'João Pipo'}</h3>
+                    <span>{user?.email || 'joao@email.com'}</span>
+                </div>
+            </div>
+            <nav className="dashboard-nav">
+                <Link href="/minha-conta/dados" className={isActive('/minha-conta/dados') ? 'active' : ''}>
+                    <User size={18} /> Meus Dados
+                </Link>
+                <Link href="/minha-conta/pedidos" className={isActive('/minha-conta/pedidos') ? 'active' : ''}>
+                    <Package size={18} /> Meus Pedidos
+                </Link>
+                <Link href="/minha-conta/enderecos" className={isActive('/minha-conta/enderecos') ? 'active' : ''}>
+                    <MapPin size={18} /> Endereços
+                </Link>
+                <Link href="/minha-conta/carteira" className={isActive('/minha-conta/carteira') ? 'active' : ''}>
+                    <CreditCard size={18} /> Carteira
+                </Link>
+                <Link href="/favoritos" className={isActive('/favoritos') ? 'active' : ''}>
+                    <Heart size={18} /> Favoritos
+                </Link>
+                <button onClick={logout} className="text-danger" style={{ background: 'none', border: 'none', width: '100%', cursor: 'pointer', padding: '12px 15px', fontSize: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <LogOut size={18} /> Sair
+                    </div>
+                </button>
+            </nav>
+        </aside>
+    );
+}
