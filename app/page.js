@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getProducts } from "./data/products";
+// import { getProducts } from "./data/products";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, BookOpen, Heart, ShoppingCart, Rocket, Gamepad2 } from "lucide-react";
 import { useWishlist } from "./context/WishlistContext";
@@ -36,7 +36,17 @@ export default function HomePage() {
   ];
 
   useEffect(() => {
-    setProducts(getProducts());
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/api/products');
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        setProducts(data);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    fetchProducts();
   }, []);
 
   // Auto-rotate effect (resets on manual interaction)
