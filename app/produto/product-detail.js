@@ -1,7 +1,7 @@
 "use client";
 
 import React, { use, useState, useEffect } from "react";
-import { getProductById } from "../data/products";
+// import { getProductById } from "../data/products";
 import { ShoppingCart, Heart, ChevronLeft, ChevronRight, Circle } from "lucide-react";
 import Link from 'next/link';
 import { useWishlist } from '../context/WishlistContext';
@@ -9,35 +9,37 @@ import { useCart } from '../context/CartContext';
 
 export default function ProductPage({ params }) {
     const unwrappedParams = use(params);
-    const product = getProductById(unwrappedParams.id);
+    const [product, setProduct] = useState(null);
     const { toggleWishlist, isInWishlist } = useWishlist();
     const { addToCart, cartItems, updateQuantity } = useCart();
 
-    // Hooks must be unconditional, but we need product to init.
-    // We'll use effects to sync.
     const [quantity, setQuantity] = useState(1);
     const [activeImgIndex, setActiveImgIndex] = useState(0);
     const [zoomStyle, setZoomStyle] = useState({});
 
-    // Find if item is already in cart
+    // Fetch Product Data
+    useEffect(() => {
+        fetch(`/api/products/${unwrappedParams.id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) setProduct(null);
+                else setProduct(data);
+            })
+            .catch(err => console.error(err));
+    }, [unwrappedParams.id]);
+
     const cartItem = cartItems.find(item => item?.id === product?.id);
     const qtyInCart = cartItem ? cartItem.qty : 0;
     const stock = product?.estoque || 0;
     const images = product?.galeria && product.galeria.length > 0 ? product.galeria : (product?.imagem ? [product.imagem] : []);
 
-    // Sync local quantity with cart ONLY on initial load or if cart changes externally?
-    // User wants to edit it here.
-    // Strategy: If in cart, init with cart qty.
     useEffect(() => {
-        if (qtyInCart > 0) {
-            setQuantity(qtyInCart);
-        } else {
-            setQuantity(1);
-        }
-    }, [qtyInCart]); // This might reset user input if they are typing? No, we use buttons.
+        if (qtyInCart > 0) setQuantity(qtyInCart);
+        else setQuantity(1);
+    }, [qtyInCart]);
 
     if (!product) {
-        return <div style={{ textAlign: 'center', marginTop: '50px', fontSize: '1.5rem' }}>Produto não encontrado!</div>;
+        return <div style={{ textAlign: 'center', marginTop: '50px', fontSize: '1.5rem' }}>Carregando produto...</div>;
     }
 
     const isWishlisted = isInWishlist(product.id);
@@ -111,6 +113,8 @@ export default function ProductPage({ params }) {
                             style={{
                                 width: '100%',
                                 height: 'auto',
+                                maxHeight: '500px', // Limit height as requested
+                                padding: '20px', // Add "cream frame" feel or just spacing
                                 objectFit: 'contain',
                                 transition: 'transform 0.1s ease-out',
                                 ...zoomStyle

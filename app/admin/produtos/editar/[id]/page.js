@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, use } from 'react';
-import ProductForm from '../../components/ProductForm';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import ProductForm from '../../../components/ProductForm';
 
-export default function EditProductPage({ params }) {
-    const { id } = use(params);
+export default function EditProductPage() {
+    const { id } = useParams();
     const [product, setProduct] = useState(null);
 
     useEffect(() => {

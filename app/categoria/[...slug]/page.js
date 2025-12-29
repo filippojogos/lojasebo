@@ -77,6 +77,7 @@ export default function CategoryPage({ params }) {
     const getXbox = () => products.filter(p => p.subcategoria === 'Xbox');
     const getSony = () => products.filter(p => p.subcategoria === 'Sony');
     const getSega = () => products.filter(p => p.subcategoria === 'Sega');
+    const getPc = () => products.filter(p => p.subcategoria === 'PC');
 
     // Card Game Specific Data
     const getHighlightsCards = () => products.filter(p => (['Oferta', 'Destaque', 'Novo', 'Ultra Raro', 'Icone', 'Réplica'].includes(p.tag)) && p.categoria === 'Card Game').slice(0, 4);
@@ -110,6 +111,7 @@ export default function CategoryPage({ params }) {
                         <ProductSection title="Xbox" products={getXbox()} linkHref="/categoria/video-game/xbox" />
                         <ProductSection title="Sony" products={getSony()} linkHref="/categoria/video-game/sony" />
                         <ProductSection title="Sega" products={getSega()} linkHref="/categoria/video-game/sega" />
+                        <ProductSection title="PC Games" products={getPc()} linkHref="/categoria/video-game/pc" />
                     </>
                 ) : isCardGameRoot ? (
                     /* Specialized Card Game Layout */

@@ -41,7 +41,7 @@ export default function Footer() {
                 </div>
             </div>
             <div className="copyright">
-                &copy; 2025 Loja Sebo. Todos os direitos reservados.
+                &copy; 2025 Loja Sebo. Todos os direitos reservados. | <Link href="/admin/login" style={{ color: '#aaa', textDecoration: 'none', marginLeft: '10px', fontSize: '0.8rem' }}>Admin Access</Link>
             </div>
         </footer>
     );

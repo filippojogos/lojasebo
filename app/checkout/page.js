@@ -13,6 +13,11 @@ export default function CheckoutPage() {
     const router = useRouter();
     const [method, setMethod] = useState('pix');
     const [selectedAddress, setSelectedAddress] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const shipping = 22.50;
+    const discount = method === 'pix' ? cartTotal * 0.1 : 0;
+    const finalTotal = cartTotal + shipping - discount;
 
     // Redirect if empty
     useEffect(() => {
@@ -40,11 +45,6 @@ export default function CheckoutPage() {
             </div>
         );
     }
-
-    const shipping = 22.50;
-    const discount = method === 'pix' ? cartTotal * 0.1 : 0;
-    const finalTotal = cartTotal + shipping - discount;
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const handleCheckout = () => {
         // Simulate API call/processing

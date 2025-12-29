@@ -1,24 +1,23 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, ArrowLeft } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Upload, X } from 'lucide-react';
 
 export default function ProductForm({ initialData, isEdit }) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [formData, setFormData] = useState({
         nome: '',
-        precoOriginal: '',
         preco: '',
         categoria: '',
-        subcategoria: '',
-        imagem: '',
-        tag: '',
+        subcategoria: '', // Still keeping it for internal structure if needed, or we can repurpose
+        imagem: '', // Main image
+        galeria: [], // Extra images
         descricao: '',
-        sku: '',
         estoque: '',
-        rating: 5,
+        // Removed: SKU, Tag, PrecoOriginal
         ...initialData
     });
 
@@ -27,16 +26,111 @@ export default function ProductForm({ initialData, isEdit }) {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleImageUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        if (formData.galeria && (formData.galeria.length + files.length) > 6) {
+            alert("Máximo de 6 imagens permitidas.");
+            return;
+        }
+
+        setUploading(true);
+        const uploadedUrls = [];
+
+        for (const file of files) {
+            const data = new FormData();
+            data.append('file', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: data
+                });
+                const json = await res.json();
+                if (json.url) {
+                    uploadedUrls.push(json.url);
+                }
+            } catch (err) {
+                console.error("Upload failed", err);
+                alert("Falha ao enviar imagem.");
+            }
+        }
+
+        setUploading(false);
+
+        // First image becomes main 'imagem', others go to 'galeria'
+        setFormData(prev => {
+            const currentMain = prev.imagem;
+            const currentGaleria = prev.galeria || [];
+
+            let newMain = currentMain;
+            const newGaleria = [...currentGaleria];
+
+            uploadedUrls.forEach(url => {
+                if (!newMain) {
+                    newMain = url;
+                }
+                // Also add to galeria for the carousel
+                newGaleria.push(url);
+            });
+
+            return {
+                ...prev,
+                imagem: newMain,
+                galeria: newGaleria
+            };
+        });
+    };
+
+    const removeImage = (index) => {
+        setFormData(prev => {
+            const newGaleria = prev.galeria.filter((_, i) => i !== index);
+            // If we removed the main image (index 0 usually matches main if synced), update main
+            // logic: usually main is galeria[0]
+            return {
+                ...prev,
+                imagem: newGaleria.length > 0 ? newGaleria[0] : '', // Fallback to empty
+                galeria: newGaleria
+            };
+        });
+    };
+
+    const categories = [
+        "Livros", "HQ´s", "Mangas",
+        "CD´s", "VHS", "DVD´s", "Blue-Ray",
+        "Nintendo", "XBOX", "Sony", "Sega", "PC",
+        "Pokemon TCG", "Yu-Gi-Oh!", "Magic"
+    ];
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
+        // Map flat selection to Category/Subcategory Structure
+        let finalCategory = formData.categoria;
+        let finalSubCategory = "";
+
+        const videoGameSubs = ["Nintendo", "XBOX", "Sony", "Sega", "PC"];
+        const cardGameSubs = ["Pokemon TCG", "Yu-Gi-Oh!", "Magic"];
+
+        if (videoGameSubs.includes(formData.categoria)) {
+            finalCategory = "Video Game";
+            finalSubCategory = formData.categoria;
+        } else if (cardGameSubs.includes(formData.categoria)) {
+            finalCategory = "Card Game";
+            finalSubCategory = formData.categoria;
+        }
+
         const payload = {
             ...formData,
+            categoria: finalCategory,
+            subcategoria: finalSubCategory,
             preco: parseFloat(formData.preco),
-            precoOriginal: parseFloat(formData.precoOriginal || 0),
             estoque: parseInt(formData.estoque),
-            rating: parseFloat(formData.rating)
+            sku: 'N/A',
+            precoOriginal: 0,
+            tag: ''
         };
 
         try {
@@ -64,81 +158,150 @@ export default function ProductForm({ initialData, isEdit }) {
         }
     };
 
+
     return (
-        <form onSubmit={handleSubmit} style={{ background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Nome do Produto</label>
-                    <input name="nome" value={formData.nome} onChange={handleChange} style={inputStyle} required />
-                </div>
+        <form onSubmit={handleSubmit} style={{ background: '#fff', maxWidth: '1400px', margin: '20px auto', fontFamily: 'sans-serif', padding: '40px', borderRadius: '15px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
 
-                <div>
-                    <label style={labelStyle}>Preço (R$)</label>
-                    <input type="number" step="0.01" name="preco" value={formData.preco} onChange={handleChange} style={inputStyle} required />
+            {/* Action Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
+                <button type="button" onClick={() => router.back()} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <ArrowLeft size={18} /> Voltar
+                </button>
+                <div style={{ fontWeight: 'bold', color: '#555' }}>
+                    {isEdit ? `Editando: ${initialData.nome}` : 'Novo Produto'}
                 </div>
-
-                <div>
-                    <label style={labelStyle}>Preço Original (De)</label>
-                    <input type="number" step="0.01" name="precoOriginal" value={formData.precoOriginal} onChange={handleChange} style={inputStyle} />
-                </div>
-
-                <div>
-                    <label style={labelStyle}>Categoria</label>
-                    <select name="categoria" value={formData.categoria} onChange={handleChange} style={inputStyle} required>
-                        <option value="">Selecione...</option>
-                        <option value="Livros">Livros</option>
-                        <option value="Video Game">Video Game</option>
-                        <option value="CDs de Música">CDs de Música</option>
-                        <option value="HQs & Mangás">HQs & Mangás</option>
-                        <option value="DVDs & Blu-Ray">DVDs & Blu-Ray</option>
-                        <option value="Card Game">Card Game</option>
-                        <option value="VHS">VHS</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label style={labelStyle}>Subcategoria</label>
-                    <input name="subcategoria" value={formData.subcategoria} onChange={handleChange} style={inputStyle} placeholder="Ex: Sony, Rock, Mangá..." />
-                </div>
-
-                <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>URL da Imagem</label>
-                    <input name="imagem" value={formData.imagem} onChange={handleChange} style={inputStyle} placeholder="https://..." required />
-                    {formData.imagem && <img src={formData.imagem} alt="Preview" style={{ height: '100px', marginTop: '10px', objectFit: 'contain' }} />}
-                </div>
-
-                <div>
-                    <label style={labelStyle}>SKU</label>
-                    <input name="sku" value={formData.sku} onChange={handleChange} style={inputStyle} required />
-                </div>
-
-                <div>
-                    <label style={labelStyle}>Estoque</label>
-                    <input type="number" name="estoque" value={formData.estoque} onChange={handleChange} style={inputStyle} required />
-                </div>
-
-                <div>
-                    <label style={labelStyle}>Tag (Opcional)</label>
-                    <input name="tag" value={formData.tag} onChange={handleChange} style={inputStyle} placeholder="Ex: Oferta, Raro..." />
-                </div>
-
-                <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Descrição</label>
-                    <textarea name="descricao" value={formData.descricao} onChange={handleChange} style={{ ...inputStyle, minHeight: '100px' }} required />
-                </div>
+                <button type="submit" className="btn-cta" disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 25px' }}>
+                    <Save size={18} /> {loading ? 'Salvando...' : 'SALVAR'}
+                </button>
             </div>
 
-            <div style={{ marginTop: '30px', display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => router.back()} className="btn-outline">
-                    Cancelar
-                </button>
-                <button type="submit" className="btn-cta" disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Produto'}
-                </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 400px) 1fr', gap: '40px', alignItems: 'start' }}>
+
+                {/* Visual Editor - Left: Image */}
+                <div style={{ background: '#f5f5f5', padding: '20px', borderRadius: '12px', border: '2px dashed #ddd' }}>
+
+                    {/* Main Preview */}
+                    <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px', background: 'white', borderRadius: '8px', overflow: 'hidden' }}>
+                        {formData.imagem ? (
+                            <img src={formData.imagem} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        ) : (
+                            <div style={{ color: '#ccc', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <ImageIcon size={48} />
+                                <span>Capa do Produto</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Gallery Thumbs */}
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
+                        {formData.galeria && formData.galeria.map((url, idx) => (
+                            <div key={idx} style={{ width: '60px', height: '60px', borderRadius: '4px', overflow: 'hidden', position: 'relative', border: url === formData.imagem ? '2px solid var(--deep-purple)' : '1px solid #ddd' }}>
+                                <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onClick={() => setFormData(prev => ({ ...prev, imagem: url }))} />
+                                <button type="button" onClick={() => removeImage(idx)} style={{ position: 'absolute', top: 0, right: 0, background: 'red', color: 'white', border: 'none', cursor: 'pointer', width: '15px', height: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>X</button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div>
+                        <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            style={{ display: 'none' }}
+                            id="file-upload"
+                        />
+                        <label htmlFor="file-upload" className="btn-outline" style={{ display: 'block', textAlign: 'center', cursor: 'pointer', width: '100%', background: uploading ? '#eee' : 'white' }}>
+                            {uploading ? 'Enviando...' : '📷 Adicionar Fotos (Max 6)'}
+                        </label>
+                        <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '10px', lineHeight: '1.4' }}>
+                            <strong>Regras da Imagem:</strong><br />
+                            - Fundo da imagem deve ser <strong>CLEAN</strong> (limpo/neutro).<br />
+                            - Máxima qualidade possível (não tremida).<br />
+                            - Limite: 1080x1920 pixels.
+                        </div>
+                    </div>
+                </div>
+
+                {/* Visual Editor - Right: Info */}
+                <div>
+                    {/* Name */}
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ ...labelStyle, fontSize: '0.9rem', color: '#999', textTransform: 'uppercase' }}>Nome do Produto</label>
+                        <input
+                            name="nome"
+                            value={formData.nome}
+                            onChange={handleChange}
+                            style={{ ...inputStyle, fontSize: '1.8rem', fontWeight: 'bold', padding: '15px', borderColor: '#eee', backgroundColor: '#fff' }}
+                            placeholder="Ex: PlayStation 2 Slim..."
+                            required
+                        />
+                    </div>
+
+                    {/* Metadata Row */}
+                    <div style={{ display: 'flex', gap: '15px', marginBottom: '25px' }}>
+                        <div style={{ flex: 1 }}>
+                            <label style={labelStyle}>Categoria</label>
+                            <select name="categoria" value={formData.categoria} onChange={handleChange} style={inputStyle} required>
+                                <option value="">Selecione...</option>
+                                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            </select>
+                        </div>
+
+                        <div style={{ flex: 1 }}>
+                            <label style={labelStyle}>Preço (R$)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                name="preco"
+                                value={formData.preco}
+                                onChange={handleChange}
+                                style={{ ...inputStyle, fontWeight: 'bold', color: 'var(--deep-purple)' }}
+                                required
+                            />
+                        </div>
+
+                        <div style={{ width: '100px' }}>
+                            <label style={labelStyle}>Estoque</label>
+                            <input
+                                type="number"
+                                name="estoque"
+                                value={formData.estoque}
+                                onChange={handleChange}
+                                style={{ ...inputStyle, textAlign: 'center', fontWeight: 'bold' }}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    {/* Description Guide */}
+                    <div style={{ background: '#fff3cd', color: '#856404', padding: '15px', borderRadius: '8px', marginBottom: '15px', fontSize: '0.9rem', border: '1px solid #ffeeba' }}>
+                        <strong>⚠️ Detalhes Obrigatórios na Descrição:</strong>
+                        <ul style={{ paddingLeft: '20px', marginTop: '5px', marginBottom: 0 }}>
+                            <li>Citar avarias: riscos, rachaduras, partes quebradas, sujeira.</li>
+                            <li>Condição: Lacrado? CIB (Completo na Caixa)? Loose (Só o cartucho/console)?</li>
+                            <li>Faltam itens? (Encartes, manuais, caixa original)</li>
+                            <li><strong>Cartuchos:</strong> Foi aberto e testado? Mostre a foto do chip (PCB).</li>
+                        </ul>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <label style={{ ...labelStyle, fontSize: '1.1rem', marginBottom: '10px' }}>Sobre o Produto</label>
+                        <textarea
+                            name="descricao"
+                            value={formData.descricao}
+                            onChange={handleChange}
+                            style={{ ...inputStyle, minHeight: '200px', lineHeight: '1.5', resize: 'vertical' }}
+                            placeholder="Ex: Console limpo e higienizado. Leitor funcionando 100%. Acompanha 1 controle original..."
+                            required
+                        />
+                    </div>
+                </div>
             </div>
         </form>
     );
 }
 
-const labelStyle = { display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#555', fontSize: '0.9rem' };
-const inputStyle = { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '1rem' };
+const labelStyle = { display: 'block', marginBottom: '8px', fontWeight: '600', color: '#555', fontSize: '0.85rem' };
+const inputStyle = { width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', transition: 'border 0.2s' };

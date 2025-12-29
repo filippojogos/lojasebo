@@ -248,7 +248,8 @@ export default function Header() {
                 { label: 'NINTENDO', href: '/categoria/video-game/nintendo' },
                 { label: 'XBOX', href: '/categoria/video-game/xbox' },
                 { label: 'SONY', href: '/categoria/video-game/sony' },
-                { label: 'SEGA', href: '/categoria/video-game/sega' }
+                { label: 'SEGA', href: '/categoria/video-game/sega' },
+                { label: 'PC', href: '/categoria/video-game/pc' }
               ]
             },
             {
