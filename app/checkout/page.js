@@ -44,9 +44,80 @@ export default function CheckoutPage() {
     const shipping = 22.50;
     const discount = method === 'pix' ? cartTotal * 0.1 : 0;
     const finalTotal = cartTotal + shipping - discount;
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const handleCheckout = () => {
+        // Simulate API call/processing
+        setTimeout(() => {
+            setShowSuccessModal(true);
+        }, 500);
+    };
+
+    const handleCloseModal = () => {
+        router.push('/');
+    };
 
     return (
-        <div className="checkout-container" style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px' }}>
+        <div className="checkout-container" style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px', position: 'relative' }}>
+            {showSuccessModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0,0,0,0.6)',
+                    zIndex: 2000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    animation: 'fadeIn 0.3s ease'
+                }} onClick={handleCloseModal}>
+                    <div style={{
+                        background: 'white',
+                        padding: '40px',
+                        borderRadius: '20px',
+                        textAlign: 'center',
+                        maxWidth: '400px',
+                        width: '90%',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                        transform: 'scale(1)',
+                        animation: 'pulse-scale 0.5s ease-out'
+                    }} onClick={e => e.stopPropagation()}>
+                        <div style={{
+                            width: '80px',
+                            height: '80px',
+                            background: '#e8f5e9',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 20px',
+                            color: '#2e7d32'
+                        }}>
+                            <Check size={48} />
+                        </div>
+                        <h2 style={{ color: '#333', marginBottom: '10px' }}>Pedido Realizado!</h2>
+                        <p style={{ color: '#666', marginBottom: '25px', lineHeight: '1.5' }}>
+                            Sua compra foi finalizada com sucesso.<br />
+                            Fique de olho em <strong>Meus Pedidos</strong> para acompanhar o rastreio e cada etapa da entrega.
+                        </p>
+                        <button
+                            onClick={handleCloseModal}
+                            className="btn-cta"
+                            style={{
+                                width: '100%',
+                                padding: '15px',
+                                borderRadius: '10px',
+                                fontSize: '1rem'
+                            }}
+                        >
+                            Voltar para Loja
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <h1 className="checkout-title" style={{ marginBottom: '30px', fontSize: '2rem', color: '#1a1a1a', borderBottom: '2px solid #eee', paddingBottom: '15px' }}>
                 Finalizar Compra
             </h1>
@@ -247,7 +318,8 @@ export default function CheckoutPage() {
                         </div>
 
                         <button
-                            className="btn-buy btn-block"
+                            onClick={handleCheckout}
+                            className="btn-buy btn-block btn-pulse"
                             disabled={!selectedAddress}
                             style={{
                                 width: '100%',

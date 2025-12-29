@@ -12,7 +12,7 @@ export default function Footer() {
                     <h3>Loja Sebo</h3>
                     <ul className="footer-links">
                         <li><Link href="/sobre">Sobre Nós</Link></li>
-                        <li><Link href="/ajuda">Trocas e Devoluções (FAQ)</Link></li>
+                        <li><Link href="/ajuda">FAQ</Link></li>
                         <li><Link href="/fale-conosco">Fale Conosco (IA Chat)</Link></li>
                     </ul>
                 </div>

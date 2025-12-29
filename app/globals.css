@@ -798,6 +798,16 @@ footer {
 }
 
 .detail-sku {
+
+@keyframes pulse-scale {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(255, 101, 0, 0.4); }
+  100% { transform: scale(1); }
+}
+
+.btn-pulse:hover {
+  animation: pulse-scale 1.5s infinite ease-in-out;
+}
   color: #999;
   font-size: 0.8rem;
   margin-bottom: 15px;
