@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, Package, MapPin, CreditCard, Heart, LogOut } from 'lucide-react';
+import { User, Package, MapPin, CreditCard, Heart, LogOut, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function DashboardSidebar() {
@@ -38,6 +38,9 @@ export default function DashboardSidebar() {
                 </Link>
                 <Link href="/favoritos" className={isActive('/favoritos') ? 'active' : ''}>
                     <Heart size={18} /> Favoritos
+                </Link>
+                <Link href="/minha-conta/deletar-conta" className={isActive('/minha-conta/deletar-conta') ? 'active' : ''} style={{ color: '#e74c3c' }}>
+                    <Trash2 size={18} /> Deletar Conta
                 </Link>
                 <button onClick={logout} className="text-danger" style={{ background: 'none', border: 'none', width: '100%', cursor: 'pointer', padding: '12px 15px', fontSize: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
