@@ -193,5 +193,40 @@
         "sku": "GAME-SEGA-013",
         "rating": 4.8,
         "estoque": 5
+    },
+    {
+        "nome": "The Warcraft - Roleplaying [Dungeons & Dragons]",
+        "preco": 200,
+        "categoria": "Livros",
+        "subcategoria": "",
+        "imagem": "/uploads/1767035656014_cropped-image.jpg",
+        "galeria": [
+            "/uploads/1767035656014_cropped-image.jpg",
+            "/uploads/1767035691153_cropped-image.jpg"
+        ],
+        "descricao": "Livro Original de D&D com tema de Warcraft.\n-Totalmente em Portugues/BR\n-Capa dura\n-RPG Cenário de Campanha para Dungeons & Dragons 3.5\n-Para maiores de 14 anos\n-Pouco usado\n-Paginas em perfeito estado",
+        "estoque": 1,
+        "sku": "N/A",
+        "precoOriginal": 0,
+        "tag": "",
+        "id": 14
+    },
+    {
+        "nome": "Agent Hugo ",
+        "preco": 120,
+        "categoria": "Video Game",
+        "subcategoria": "PC",
+        "imagem": "/uploads/1767064182472_1.png",
+        "galeria": [
+            "/uploads/1767064182472_1.png",
+            "/uploads/1767064199363_2.png",
+            "/uploads/1767064206510_Sem_Título-1.png"
+        ],
+        "descricao": "- Funcionando 100%",
+        "estoque": 1,
+        "sku": "N/A",
+        "precoOriginal": 0,
+        "tag": "",
+        "id": 15
     }
 ]

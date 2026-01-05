@@ -37,7 +37,7 @@ export default function ProductSection({ title, linkHref, products, showLink = t
             </div>
 
             <div className="products-grid">
-                {products.slice(0, 4).map((product) => (
+                {products.slice(0, 12).map((product) => (
                     <ProductCard key={product.id} product={product} />
                 ))}
             </div>

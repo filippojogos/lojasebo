@@ -83,12 +83,18 @@ export function CartProvider({ children }) {
         return acc + qty;
     }, 0);
 
+    const clearCart = () => {
+        setCartItems([]);
+        localStorage.removeItem("sebo_cart");
+    };
+
     return (
         <CartContext.Provider value={{
             cartItems,
             addToCart,
             removeFromCart,
             updateQuantity,
+            clearCart, // Exposed
             isCartOpen,
             toggleCart,
             closeCart,

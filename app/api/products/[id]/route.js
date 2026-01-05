@@ -1,36 +1,59 @@
 
 import { NextResponse } from 'next/server';
-import { getProducts, saveProducts } from '../../../lib/productUtils';
+import prisma from '../../../lib/prisma';
 
 export async function GET(request, { params }) {
-    const { id } = await params;
-    const products = getProducts();
-    const product = products.find(p => p.id === parseInt(id));
+    try {
+        const { id } = await params;
+        const product = await prisma.product.findUnique({
+            where: { id: parseInt(id) }
+        });
 
-    if (!product) {
-        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        if (!product) {
+            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        }
+
+        // Parse galeria
+        const formattedProduct = {
+            ...product,
+            galeria: product.galeria ? JSON.parse(product.galeria) : []
+        };
+
+        return NextResponse.json(formattedProduct);
+    } catch (error) {
+        console.error("Error fetching product:", error);
+        return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 });
     }
-
-    return NextResponse.json(product);
 }
 
 export async function PUT(request, { params }) {
     try {
         const { id } = await params;
-        const products = getProducts();
-        const index = products.findIndex(p => p.id === parseInt(id));
+        const updates = await request.json();
 
-        if (index === -1) {
-            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        // Handle galeria serialization if it's being updated
+        if (updates.galeria && typeof updates.galeria !== 'string') {
+            updates.galeria = JSON.stringify(updates.galeria);
         }
 
-        const updates = await request.json();
-        products[index] = { ...products[index], ...updates };
+        // Remove id from updates if present (shouldn't change ID)
+        delete updates.id;
 
-        saveProducts(products);
+        const updatedProduct = await prisma.product.update({
+            where: { id: parseInt(id) },
+            data: updates
+        });
 
-        return NextResponse.json(products[index]);
+        return NextResponse.json({
+            ...updatedProduct,
+            galeria: JSON.parse(updatedProduct.galeria)
+        });
     } catch (error) {
+        console.error("Error updating product:", error);
+        // Check for record not found
+        if (error.code === 'P2025') {
+            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        }
         return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
     }
 }
@@ -38,19 +61,17 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
     try {
         const { id } = await params;
-        let products = getProducts();
-        const initialLength = products.length;
 
-        products = products.filter(p => p.id !== parseInt(id));
-
-        if (products.length === initialLength) {
-            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-        }
-
-        saveProducts(products);
+        await prisma.product.delete({
+            where: { id: parseInt(id) }
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
+        console.error("Error deleting product:", error);
+        if (error.code === 'P2025') {
+            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        }
         return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
     }
 }

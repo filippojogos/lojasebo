@@ -3,11 +3,17 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, ArrowLeft, Image as ImageIcon, Upload, X } from 'lucide-react';
+import ImageCropperModal from './ImageCropperModal';
 
 export default function ProductForm({ initialData, isEdit }) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
+
+    // Crop State
+    const [cropModalOpen, setCropModalOpen] = useState(false);
+    const [currentImageToCrop, setCurrentImageToCrop] = useState(null);
+    const [pendingFiles, setPendingFiles] = useState([]); // Queue for multiple files
     const [formData, setFormData] = useState({
         nome: '',
         preco: '',
@@ -26,71 +32,83 @@ export default function ProductForm({ initialData, isEdit }) {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleImageUpload = async (e) => {
+
+    // 1. Intercepta seleção de arquivo
+    const handleFileSelect = (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        if (formData.galeria && (formData.galeria.length + files.length) > 6) {
-            alert("Máximo de 6 imagens permitidas.");
-            return;
-        }
+        // Se for upload múltiplo, vamos processar o primeiro agora e guardar os outros se quiser (mas vamos simplificar: focar sempre no primeiro para Crop)
+        // Se usuário selecionar múltiplos, vamos assumir que quer Crop no primeiro.
+        // Melhor: vamos processar um por um se quiser.
+        // Implementação Simplificada: Pega o primeiro arquivo para crop.
 
-        setUploading(true);
-        const uploadedUrls = [];
+        const file = files[0];
+        setCurrentImageToCrop(null); // Reset
 
-        for (const file of files) {
-            const data = new FormData();
-            data.append('file', file);
-
-            try {
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: data
-                });
-                const json = await res.json();
-                if (json.url) {
-                    uploadedUrls.push(json.url);
-                }
-            } catch (err) {
-                console.error("Upload failed", err);
-                alert("Falha ao enviar imagem.");
-            }
-        }
-
-        setUploading(false);
-
-        // First image becomes main 'imagem', others go to 'galeria'
-        setFormData(prev => {
-            const currentMain = prev.imagem;
-            const currentGaleria = prev.galeria || [];
-
-            let newMain = currentMain;
-            const newGaleria = [...currentGaleria];
-
-            uploadedUrls.forEach(url => {
-                if (!newMain) {
-                    newMain = url;
-                }
-                // Also add to galeria for the carousel
-                newGaleria.push(url);
-            });
-
-            return {
-                ...prev,
-                imagem: newMain,
-                galeria: newGaleria
-            };
+        const reader = new FileReader();
+        reader.addEventListener('load', () => {
+            setCurrentImageToCrop(reader.result);
+            setPendingFiles([file]); // Store file access
+            setCropModalOpen(true);
         });
+        reader.readAsDataURL(file);
+
+        // Limpa o input
+        e.target.value = '';
+    };
+
+    // 2. Recebe a imagem cortada e faz o upload
+    const handleCropComplete = async (croppedFile) => {
+        setCropModalOpen(false);
+        setUploading(true);
+        setCurrentImageToCrop(null);
+
+        const data = new FormData();
+        data.append('file', croppedFile);
+
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: data
+            });
+            const json = await res.json();
+
+            if (json.url) {
+                setFormData(prev => {
+                    // Logic: Always sync 'imagem' (Cover) with the first item in 'galeria'.
+                    // If we add a new item, push it to galeria.
+                    // Then set 'imagem' to galeria[0].
+
+                    const currentGaleria = prev.galeria || [];
+                    const newGaleria = [...currentGaleria, json.url];
+
+                    return {
+                        ...prev,
+                        imagem: newGaleria[0], // Always first image
+                        galeria: newGaleria
+                    };
+                });
+            }
+        } catch (err) {
+            console.error("Upload failed", err);
+            alert("Falha ao enviar imagem.");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleCropCancel = () => {
+        setCropModalOpen(false);
+        setCurrentImageToCrop(null);
     };
 
     const removeImage = (index) => {
         setFormData(prev => {
             const newGaleria = prev.galeria.filter((_, i) => i !== index);
-            // If we removed the main image (index 0 usually matches main if synced), update main
-            // logic: usually main is galeria[0]
             return {
                 ...prev,
-                imagem: newGaleria.length > 0 ? newGaleria[0] : '', // Fallback to empty
+                imagem: newGaleria.length > 0 ? newGaleria[0] : '', // Adjust count accordingly
                 galeria: newGaleria
             };
         });
@@ -207,7 +225,7 @@ export default function ProductForm({ initialData, isEdit }) {
                             type="file"
                             multiple
                             accept="image/*"
-                            onChange={handleImageUpload}
+                            onChange={handleFileSelect}
                             style={{ display: 'none' }}
                             id="file-upload"
                         />
@@ -217,8 +235,9 @@ export default function ProductForm({ initialData, isEdit }) {
                         <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '10px', lineHeight: '1.4' }}>
                             <strong>Regras da Imagem:</strong><br />
                             - Fundo da imagem deve ser <strong>CLEAN</strong> (limpo/neutro).<br />
+                            - Fundo da imagem deve ser <strong>CLEAN</strong> (limpo/neutro).<br />
                             - Máxima qualidade possível (não tremida).<br />
-                            - Limite: 1080x1920 pixels.
+                            - <strong>Formato Padrão: 4:5 (ex: 800x1000px)</strong> - O sistema ajustará o corte automaticamente.
                         </div>
                     </div>
                 </div>
@@ -299,6 +318,14 @@ export default function ProductForm({ initialData, isEdit }) {
                     </div>
                 </div>
             </div>
+            {cropModalOpen && (
+                <ImageCropperModal
+                    imageSrc={currentImageToCrop}
+                    originalFile={pendingFiles[0]}
+                    onClose={handleCropCancel}
+                    onCropComplete={handleCropComplete}
+                />
+            )}
         </form>
     );
 }

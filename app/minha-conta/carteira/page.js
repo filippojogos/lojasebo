@@ -5,7 +5,7 @@ import { Plus, Trash2, AlertTriangle, CheckCircle, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function CarteiraPage() {
-    const { user, updateUserData } = useAuth();
+    const { user, updateUserData, loading } = useAuth();
     const [showModal, setShowModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [cards, setCards] = useState([]);
@@ -28,14 +28,10 @@ export default function CarteiraPage() {
 
     useEffect(() => {
         if (user && user.cards) {
-            setCards(user.cards);
-        } else {
-            const initialCards = [
-                { id: 1, name: "JOAO P PIPO", number: "8892", brand: "MasterCard", expiry: "12/28", gradient: "gradient-1", priority: true },
-                { id: 2, name: "JOAO P PIPO", number: "4451", brand: "Visa", expiry: "08/25", gradient: "gradient-2", priority: false }
-            ];
-            if (!user) setCards(initialCards);
-            else if (user.cards === undefined) updateUserData({ cards: initialCards });
+            // Simple deep compare to avoid unnecessary re-renders
+            if (JSON.stringify(user.cards) !== JSON.stringify(cards)) {
+                setCards(user.cards);
+            }
         }
     }, [user]);
 
@@ -80,10 +76,20 @@ export default function CarteiraPage() {
         }
 
         setCards(updatedList);
-        if (user) updateUserData({ cards: updatedList });
 
-        showToastMsg("Cartão salvo com sucesso!");
-        closeModal();
+        updateUserData({ cards: updatedList })
+            .then(success => {
+                if (success) {
+                    showToastMsg("Cartão salvo com sucesso!");
+                    closeModal();
+                } else {
+                    showToastMsg("Erro ao salvar cartão.", "error");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToastMsg("Erro inesperado.", "error");
+            });
     };
 
     const openNewModal = () => {
@@ -131,11 +137,19 @@ export default function CarteiraPage() {
         }
 
         setCards(updatedList);
-        if (user) updateUserData({ cards: updatedList });
 
-        showToastMsg("Cartão excluído com sucesso.");
-        closeModal();
+        updateUserData({ cards: updatedList })
+            .then(success => {
+                if (success) {
+                    showToastMsg("Cartão excluído com sucesso.");
+                    closeModal();
+                } else {
+                    showToastMsg("Erro ao excluir cartão.", "error");
+                }
+            });
     };
+
+    if (loading || !user) return <div style={{ padding: '20px' }}>Carregando...</div>;
 
     return (
         <div>

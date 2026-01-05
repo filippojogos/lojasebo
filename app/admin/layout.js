@@ -11,6 +11,8 @@ export default function AdminLayout({ children }) {
     const pathname = usePathname();
     const [loading, setLoading] = useState(true);
 
+    const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+
     useEffect(() => {
         // Simple client-side auth check
         const hasToken = document.cookie.includes('admin_token=true');
@@ -18,6 +20,26 @@ export default function AdminLayout({ children }) {
             router.push('/admin/login');
         } else {
             setLoading(false);
+        }
+
+        // Fetch pending orders for badge
+        const fetchBadge = async () => {
+            try {
+                const res = await fetch('/api/orders');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data)) {
+                        const count = data.filter(o => o.status === 'pago').length;
+                        setPendingOrdersCount(count);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch badge:", e);
+            }
+        };
+
+        if (hasToken && pathname !== '/admin/login') {
+            fetchBadge();
         }
     }, [pathname]);
 
@@ -29,34 +51,55 @@ export default function AdminLayout({ children }) {
 
     const isActive = (path) => pathname === path;
 
+    const navLinkStyle = (path) => ({
+        display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 15px',
+        borderRadius: '8px', textDecoration: 'none', color: isActive(path) ? 'white' : '#bdc3c7',
+        background: isActive(path) ? '#34495e' : 'transparent',
+        fontWeight: isActive(path) ? 'bold' : 'normal',
+        position: 'relative'
+    });
+
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f9fa' }}>
             {/* Admin Sidebar */}
-            <aside style={{ width: '250px', background: '#2c3e50', color: 'white', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+            <aside style={{ width: '250px', background: '#2c3e50', color: 'white', padding: '20px', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh' }}>
                 <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '40px', paddingBottom: '20px', borderBottom: '1px solid #34495e' }}>
                     Sebo Admin
                 </div>
 
                 <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <Link href="/admin/produtos"
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 15px',
-                            borderRadius: '8px', textDecoration: 'none', color: isActive('/admin/produtos') ? 'white' : '#bdc3c7',
-                            background: isActive('/admin/produtos') ? '#34495e' : 'transparent',
-                            fontWeight: isActive('/admin/produtos') ? 'bold' : 'normal'
-                        }}
-                    >
+                    <Link href="/admin/dashboard" style={navLinkStyle('/admin/dashboard')}>
+                        <LayoutGrid size={20} /> Dashboard
+                    </Link>
+                    <Link href="/admin/produtos" style={navLinkStyle('/admin/produtos')}>
                         <Package size={20} /> Produtos
                     </Link>
-                    <Link href="/admin/produtos/novo"
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 15px',
-                            borderRadius: '8px', textDecoration: 'none', color: isActive('/admin/produtos/novo') ? 'white' : '#bdc3c7',
-                            background: isActive('/admin/produtos/novo') ? '#34495e' : 'transparent',
-                            fontWeight: isActive('/admin/produtos/novo') ? 'bold' : 'normal'
-                        }}
-                    >
+                    <Link href="/admin/clientes" style={navLinkStyle('/admin/clientes')}>
+                        <LayoutGrid size={20} /> Clientes
+                    </Link>
+                    <Link href="/admin/saida" style={navLinkStyle('/admin/saida')}>
+                        <Package size={20} /> Saída (Pedidos)
+                        {pendingOrdersCount > 0 && (
+                            <span style={{
+                                position: 'absolute', right: '15px', background: '#e74c3c',
+                                color: 'white', fontSize: '0.7rem', fontWeight: 'bold',
+                                padding: '2px 8px', borderRadius: '10px'
+                            }}>
+                                {pendingOrdersCount}
+                            </span>
+                        )}
+                    </Link>
+
+                    <div style={{ height: '1px', background: '#34495e', margin: '10px 0' }}></div>
+
+                    <Link href="/admin/produtos/novo" style={navLinkStyle('/admin/produtos/novo')}>
                         <PlusCircle size={20} /> Novo Produto
+                    </Link>
+                    <Link href="/admin/banners" style={navLinkStyle('/admin/banners')}>
+                        <LayoutGrid size={20} /> Banners (Topo)
+                    </Link>
+                    <Link href="/admin/destaques" style={navLinkStyle('/admin/destaques')}>
+                        <Package size={20} /> Vitrines (Home)
                     </Link>
                 </nav>
 

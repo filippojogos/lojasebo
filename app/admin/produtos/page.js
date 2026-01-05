@@ -92,7 +92,6 @@ export default function AdminProductsPage() {
                                 </td>
                                 <td style={tdStyle}>
                                     <div style={{ fontWeight: 'bold', color: '#333' }}>{product.nome}</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#777' }}>SKU: {product.sku}</div>
                                 </td>
                                 <td style={tdStyle}>{product.categoria}</td>
                                 <td style={tdStyle}>R$ {product.preco.toFixed(2)}</td>

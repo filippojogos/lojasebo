@@ -1,0 +1,35 @@
+[
+    {
+        "id": 2,
+        "title": "Geek Festival",
+        "desc": "Os melhores HQs e Mangás.",
+        "image": "",
+        "bgColor": "linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%)",
+        "link": "/categoria/hqs-mangas",
+        "duration": 5,
+        "order": 1,
+        "active": true
+    },
+    {
+        "id": 1,
+        "title": "Semana do Leitor",
+        "desc": "Descontos de até 50% em clássicos da literatura.",
+        "image": "",
+        "bgColor": "linear-gradient(90deg, var(--deep-purple) 0%, #4a148c 100%)",
+        "link": "/categoria/livros",
+        "duration": 5,
+        "order": 2,
+        "active": true
+    },
+    {
+        "id": 3,
+        "title": "Level Up!",
+        "desc": "Games e Consoles de última geração.",
+        "image": "",
+        "bgColor": "linear-gradient(90deg, #991b1b 0%, #dc2626 100%)",
+        "link": "/categoria/video-game",
+        "duration": 5,
+        "order": 3,
+        "active": true
+    }
+]

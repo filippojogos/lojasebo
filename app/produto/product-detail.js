@@ -1,15 +1,15 @@
 "use client";
 
-import React, { use, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 // import { getProductById } from "../data/products";
 import { ShoppingCart, Heart, ChevronLeft, ChevronRight, Circle } from "lucide-react";
 import Link from 'next/link';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 
-export default function ProductPage({ params }) {
-    const unwrappedParams = use(params);
+export default function ProductPage({ id }) {
     const [product, setProduct] = useState(null);
+    const [notFoundState, setNotFoundState] = useState(false);
     const { toggleWishlist, isInWishlist } = useWishlist();
     const { addToCart, cartItems, updateQuantity } = useCart();
 
@@ -19,14 +19,28 @@ export default function ProductPage({ params }) {
 
     // Fetch Product Data
     useEffect(() => {
-        fetch(`/api/products/${unwrappedParams.id}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) setProduct(null);
-                else setProduct(data);
+        if (!id) return;
+
+        fetch(`/api/products/${id}`)
+            .then(async (res) => {
+                if (!res.ok) {
+                    if (res.status === 404) setNotFoundState(true);
+                    throw new Error('Failed to fetch');
+                }
+                return res.json();
             })
-            .catch(err => console.error(err));
-    }, [unwrappedParams.id]);
+            .then(data => {
+                if (data.error) {
+                    setNotFoundState(true);
+                } else {
+                    setProduct(data);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                // If 404 was already handled, fine. If network error, maybe show error.
+            });
+    }, [id]);
 
     const cartItem = cartItems.find(item => item?.id === product?.id);
     const qtyInCart = cartItem ? cartItem.qty : 0;
@@ -37,6 +51,16 @@ export default function ProductPage({ params }) {
         if (qtyInCart > 0) setQuantity(qtyInCart);
         else setQuantity(1);
     }, [qtyInCart]);
+
+    if (notFoundState) {
+        return (
+            <div style={{ textAlign: 'center', marginTop: '100px', padding: '20px' }}>
+                <h2 style={{ fontSize: '2rem', color: '#333' }}>Produto não encontrado</h2>
+                <p style={{ color: '#666', marginBottom: '20px' }}>Este produto pode ter sido removido.</p>
+                <Link href="/" className="btn-cta" style={{ display: 'inline-block' }}>Voltar para a Loja</Link>
+            </div>
+        );
+    }
 
     if (!product) {
         return <div style={{ textAlign: 'center', marginTop: '50px', fontSize: '1.5rem' }}>Carregando produto...</div>;

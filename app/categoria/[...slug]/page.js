@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronRight, ShoppingCart, Heart } from 'lucide-react';
-import { getProducts } from '../../data/products';
+// import { getProducts } from '../../data/products';
 import { useWishlist } from '../../context/WishlistContext';
 import ProductSection from '../../components/ProductSection';
 import ProductCard from '../../components/ProductCard';
@@ -15,57 +15,63 @@ export default function CategoryPage({ params }) {
     const [subCategoryName, setSubCategoryName] = useState('');
 
     useEffect(() => {
-        const slugs = params.slug;
-        const mainCatSlug = slugs[0];
-        const subCatSlug = slugs[1];
+        const fetchProductsAndFilter = async () => {
+            try {
+                // Fetch fresh data from API (which reads the JSON updated by Admin)
+                const res = await fetch('/api/products');
+                const allProducts = await res.json();
 
-        // Map for cleaner titles
-        const CATEGORY_MAP = {
-            'livros': 'Livros',
-            'dvds-blu-ray': 'DVDs & Blu-Ray',
-            'cds-de-musica': 'CDs de Música',
-            'video-game': 'Video Game',
-            'hqs-mangas': 'HQs & Mangás',
-            'card-game': 'Card Game',
-            'vhs': 'VHS'
-        };
+                const slugs = params.slug;
+                const mainCatSlug = slugs[0];
+                const subCatSlug = slugs[1];
 
-        const allProducts = getProducts();
+                // Map for cleaner titles
+                const CATEGORY_MAP = {
+                    'livros': 'Livros',
+                    'dvds-blu-ray': 'DVDs & Blu-Ray',
+                    'cds-de-musica': 'CDs de Música',
+                    'video-game': 'Video Game',
+                    'hqs-mangas': 'HQs & Mangás',
+                    'card-game': 'Card Game',
+                    'vhs': 'VHS'
+                };
 
-        const normalize = (str) => {
-            if (!str) return '';
-            return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
-        };
+                const normalize = (str) => {
+                    if (!str) return '';
+                    return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+                };
 
-        const filtered = allProducts.filter(p => {
-            const pCat = normalize(p.categoria);
-            const sCat = normalize(mainCatSlug);
+                const filtered = allProducts.filter(p => {
+                    const pCat = normalize(p.categoria);
+                    const sCat = normalize(mainCatSlug);
 
-            // Special case for mappings if needed, but normalize usually handles it.
-            // e.g. 'DVDs & Blu-Ray' -> 'dvdsbluray', 'dvds-blu-ray' -> 'dvdsbluray'
+                    if (pCat !== sCat) return false;
 
-            if (pCat !== sCat) return false;
+                    if (subCatSlug) {
+                        const pSub = normalize(p.subcategoria);
+                        const sSub = normalize(subCatSlug);
+                        return pSub === sSub;
+                    }
 
-            if (subCatSlug) {
-                const pSub = normalize(p.subcategoria);
-                const sSub = normalize(subCatSlug);
-                return pSub === sSub;
+                    return true;
+                });
+
+                setProducts(filtered);
+
+                // Set display names
+                const cleanTitle = CATEGORY_MAP[mainCatSlug] || mainCatSlug.replace(/-/g, ' ').toUpperCase();
+                setCategoryName(cleanTitle);
+
+                if (subCatSlug) {
+                    setSubCategoryName(subCatSlug.replace(/-/g, ' ').toUpperCase());
+                }
+
+            } catch (error) {
+                console.error("Erro ao buscar produtos:", error);
             }
+        };
 
-            return true;
-        });
-
-        setProducts(filtered);
-
-        // Set display names
-        const cleanTitle = CATEGORY_MAP[mainCatSlug] || mainCatSlug.replace(/-/g, ' ').toUpperCase();
-        setCategoryName(cleanTitle);
-
-        if (subCatSlug) {
-            // Simple logic for subcategories or spread map if needed
-            setSubCategoryName(subCatSlug.replace(/-/g, ' ').toUpperCase());
-        }
-
+        fetchProductsAndFilter();
     }, [params.slug]);
 
     const isVideoGameRoot = params.slug?.[0] === 'video-game' && !params.slug?.[1];
@@ -106,7 +112,6 @@ export default function CategoryPage({ params }) {
             {/* Specialized Video Game Layout */
                 isVideoGameRoot ? (
                     <>
-                        <ProductSection title="Destaques Games" products={getHighlightsGames()} linkHref="#" showLink={false} />
                         <ProductSection title="Nintendo" products={getNintendo()} linkHref="/categoria/video-game/nintendo" />
                         <ProductSection title="Xbox" products={getXbox()} linkHref="/categoria/video-game/xbox" />
                         <ProductSection title="Sony" products={getSony()} linkHref="/categoria/video-game/sony" />
@@ -116,7 +121,6 @@ export default function CategoryPage({ params }) {
                 ) : isCardGameRoot ? (
                     /* Specialized Card Game Layout */
                     <>
-                        <ProductSection title="Destaques Cards" products={getHighlightsCards()} linkHref="#" showLink={false} />
                         <ProductSection title="Pokemon TCG" products={getPokemon()} linkHref="/categoria/card-game/pokemon-tcg" />
                         <ProductSection title="Yu-Gi-Oh!" products={getYugioh()} linkHref="/categoria/card-game/yu-gi-oh" />
                         <ProductSection title="Magic" products={getMagic()} linkHref="/categoria/card-game/magic" />

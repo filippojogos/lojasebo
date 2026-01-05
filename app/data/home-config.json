@@ -1,0 +1,39 @@
+{
+    "mainHighlights": [
+        2,
+        6,
+        10,
+        14
+    ],
+    "categoryHighlights": {
+        "Livros": [
+            1,
+            14
+        ],
+        "HQs & Mangás": [
+            4
+        ],
+        "CDs de Música": [
+            3
+        ],
+        "VHS": [
+            7
+        ],
+        "DVDs & Blu-Ray": [
+            5
+        ],
+        "Video Game": [
+            2,
+            6,
+            9,
+            10,
+            13,
+            15
+        ],
+        "Card Game": [
+            8,
+            11,
+            12
+        ]
+    }
+}

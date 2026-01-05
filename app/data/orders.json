@@ -1,0 +1,90 @@
+[
+    {
+        "id": 1001,
+        "cliente": {
+            "id": 1,
+            "nome": "João Silva",
+            "email": "joao@email.com",
+            "telefone": "(11) 99999-8888",
+            "cpf": "123.456.789-00",
+            "endereco": {
+                "rua": "Rua das Flores",
+                "numero": "123",
+                "bairro": "Centro",
+                "cidade": "São Paulo",
+                "uf": "SP",
+                "cep": "01001-000"
+            }
+        },
+        "itens": [
+            {
+                "produto": "O Senhor dos Anéis",
+                "qtd": 1,
+                "preco": 100
+            },
+            {
+                "produto": "CD Nirvana",
+                "qtd": 1,
+                "preco": 25
+            }
+        ],
+        "total": 125.00,
+        "lucro": 45.00,
+        "data": "2025-12-28T14:30:00",
+        "status": "pago",
+        "pagamento": "PIX"
+    },
+    {
+        "id": 1002,
+        "cliente": {
+            "id": 2,
+            "nome": "Maria Oliveira",
+            "email": "maria@email.com",
+            "telefone": "(21) 98888-7777",
+            "cpf": "987.654.321-11",
+            "endereco": {
+                "rua": "Av. Atlântica",
+                "numero": "500",
+                "bairro": "Copacabana",
+                "cidade": "Rio de Janeiro",
+                "uf": "RJ",
+                "cep": "22000-000"
+            }
+        },
+        "itens": [
+            {
+                "produto": "PlayStation 2 Slim",
+                "qtd": 1,
+                "preco": 380
+            }
+        ],
+        "total": 380.00,
+        "lucro": 100.00,
+        "data": "2025-12-29T10:15:00",
+        "status": "enviado",
+        "pagamento": "Cartão"
+    },
+    {
+        "id": 1003,
+        "cliente": {
+            "id": 3,
+            "nome": "Carlos Souza",
+            "email": "carlos@email.com",
+            "telefone": "(31) 97777-6666",
+            "cpf": "456.789.123-22",
+            "endereco": null
+        },
+        "itens": [
+            {
+                "produto": "Mangá Naruto Vol. 1",
+                "qtd": 2,
+                "preco": 30
+            }
+        ],
+        "total": 30.00,
+        "lucro": 10.00,
+        "data": "2025-12-30T09:00:00",
+        "status": "pago",
+        "pagamento": "Boleto"
+    }
+]

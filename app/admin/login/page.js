@@ -9,15 +9,18 @@ export default function AdminLogin() {
     const router = useRouter();
     const [error, setError] = useState(false);
 
+    const [loading, setLoading] = useState(false);
+
     const handleLogin = (e) => {
         e.preventDefault();
-        if (password === 'sebo123') {
-            // In a real app, set a real secure token
-            // Here we just set a flag for the layout to check
+        setLoading(true);
+        // Accept both passwords for backward compatibility/ease of use
+        if (password === 'sebo123' || password === 'admin123') {
             document.cookie = "admin_token=true; path=/";
             router.push('/admin/produtos');
         } else {
             setError(true);
+            setLoading(false);
         }
     };
 

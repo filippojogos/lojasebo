@@ -3,7 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { useCart } from '../context/CartContext';
-import { Trash2, ShoppingCart, ArrowLeft, ArrowRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext'; // Import Auth
+import { Trash2, ShoppingCart, ArrowLeft, ArrowRight, LogIn } from 'lucide-react';
 
 export default function CartPage() {
     const {
@@ -13,6 +14,7 @@ export default function CartPage() {
         cartTotal,
         cartCount
     } = useCart();
+    const { user } = useAuth(); // Hook de Auth
 
     if (cartItems.length === 0) {
         return (
@@ -107,9 +109,15 @@ export default function CartPage() {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        <Link href="/checkout" className="btn-cta btn-block" style={{ textAlign: 'center', padding: '15px', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
-                            Finalizar Compra <ArrowRight size={18} />
-                        </Link>
+                        {user ? (
+                            <Link href="/checkout" className="btn-cta btn-block" style={{ textAlign: 'center', padding: '15px', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
+                                Finalizar Compra <ArrowRight size={18} />
+                            </Link>
+                        ) : (
+                            <Link href="/login?redirect=/checkout" className="btn-cta btn-block" style={{ textAlign: 'center', padding: '15px', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', background: 'var(--deep-purple)' }}>
+                                <LogIn size={18} /> Fazer Login para Comprar
+                            </Link>
+                        )}
 
                         <Link href="/" className="btn-outline btn-block" style={{ textAlign: 'center', padding: '15px', border: '1px solid #ddd', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
                             <ArrowLeft size={18} /> Voltar para Loja

@@ -1,58 +1,63 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React from 'react';
+import { SessionProvider, useSession, signIn, signOut } from "next-auth/react";
 
-const AuthContext = createContext();
+
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        // Load user from localStorage on mount (client-side only) to avoid hydration mismatch
-        const storedUser = localStorage.getItem('sebo_user');
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (e) {
-                console.error("Failed to parse user from local storage", e);
-                localStorage.removeItem('sebo_user');
-            }
-        }
-        setLoading(false);
-    }, []);
-
-    const login = (userData) => {
-        // Merge with default structure if missing
-        const fullProfile = {
-            addresses: [],
-            cards: [],
-            ...userData
-        };
-        setUser(fullProfile);
-        localStorage.setItem('sebo_user', JSON.stringify(fullProfile));
-    };
-
-    const updateUserData = (updatedFields) => {
-        setUser(prev => {
-            const newUser = { ...prev, ...updatedFields };
-            localStorage.setItem('sebo_user', JSON.stringify(newUser));
-            return newUser;
-        });
-    };
-
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('sebo_user');
-    };
-
-    return (
-        <AuthContext.Provider value={{ user, login, logout, loading, updateUserData }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <SessionProvider>{children}</SessionProvider>;
 }
 
 export function useAuth() {
-    return useContext(AuthContext);
+    const { data: session, status, update } = useSession();
+
+    // Memoize user object to prevent infinite loops
+    const user = React.useMemo(() => {
+        return session?.user ? {
+            ...session.user,
+            name: session.user.name || session.user.email
+        } : null;
+    }, [session]);
+
+    const updateUserData = React.useCallback(async (data) => {
+        try {
+            const res = await fetch('/api/user/update', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (!res.ok) throw new Error('Falha ao atualizar dados');
+
+            // Force session update
+            await update(data);
+            return true;
+        } catch (error) {
+            console.error("Update Error:", error);
+            return false;
+        }
+    }, [update]);
+
+    const contextValue = React.useMemo(() => ({
+        user,
+        loading: status === "loading",
+        login: async (credentials) => {
+            const result = await signIn('credentials', {
+                redirect: false,
+                ...credentials
+            });
+            if (result?.error) {
+                throw new Error(result.error);
+            }
+            return result;
+        },
+        logout: () => signOut({ callbackUrl: '/' }),
+        isAuthenticated: status === "authenticated",
+        updateUserData
+    }), [user, status, update]);
+
+    return contextValue;
 }
+
+

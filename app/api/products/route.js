@@ -1,26 +1,50 @@
 
 import { NextResponse } from 'next/server';
-import { getProducts, saveProducts } from '../../lib/productUtils';
+import prisma from '../../lib/prisma';
 
 export async function GET() {
-    const products = getProducts();
-    return NextResponse.json(products);
+    try {
+        const products = await prisma.product.findMany();
+
+        // Parse JSON strings back to objects for frontend compatibility
+        const formattedProducts = products.map(p => ({
+            ...p,
+            galeria: p.galeria ? JSON.parse(p.galeria) : [],
+            // If other JSON fields exist, parse them here
+        }));
+
+        return NextResponse.json(formattedProducts);
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+    }
 }
 
 export async function POST(request) {
     try {
-        const products = getProducts();
-        const newProduct = await request.json();
+        const data = await request.json();
 
-        // Generate simple ID (max id + 1)
-        const maxId = products.reduce((max, p) => (p.id > max ? p.id : max), 0);
-        newProduct.id = maxId + 1;
+        // Remove id if present to let auto-increment handle it
+        const { id, ...createData } = data;
 
-        products.push(newProduct);
-        saveProducts(products);
+        // Ensure galeria is a string
+        if (createData.galeria && typeof createData.galeria !== 'string') {
+            createData.galeria = JSON.stringify(createData.galeria);
+        } else if (!createData.galeria) {
+            createData.galeria = '[]';
+        }
 
-        return NextResponse.json(newProduct, { status: 201 });
+        const newProduct = await prisma.product.create({
+            data: createData,
+        });
+
+        // Return with parsed galeria
+        return NextResponse.json({
+            ...newProduct,
+            galeria: JSON.parse(newProduct.galeria)
+        }, { status: 201 });
     } catch (error) {
+        console.error("Error creating product:", error);
         return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
     }
 }

@@ -1,0 +1,35 @@
+[
+    {
+        "id": 1,
+        "nome": "João Silva",
+        "email": "joao@email.com",
+        "telefone": "(11) 99999-8888",
+        "cpf": "123.456.789-00",
+        "data_cadastro": "2025-01-15",
+        "total_gasto": 125.00,
+        "pedidos_count": 1,
+        "endereco_principal": "Rua das Flores, 123 - SP"
+    },
+    {
+        "id": 2,
+        "nome": "Maria Oliveira",
+        "email": "maria@email.com",
+        "telefone": "(21) 98888-7777",
+        "cpf": "987.654.321-11",
+        "data_cadastro": "2025-02-20",
+        "total_gasto": 380.00,
+        "pedidos_count": 1,
+        "endereco_principal": "Av. Atlântica, 500 - RJ"
+    },
+    {
+        "id": 3,
+        "nome": "Carlos Souza",
+        "email": "carlos@email.com",
+        "telefone": "(31) 97777-6666",
+        "cpf": "456.789.123-22",
+        "data_cadastro": "2025-03-10",
+        "total_gasto": 30.00,
+        "pedidos_count": 1,
+        "endereco_principal": "Não cadastrado"
+    }
+]
