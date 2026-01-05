@@ -16,8 +16,13 @@ export default function AdminLogin() {
         setLoading(true);
         // Accept both passwords for backward compatibility/ease of use
         if (password === 'sebo123' || password === 'admin123') {
-            document.cookie = "admin_token=true; path=/";
-            router.push('/admin/produtos');
+            // Set cookie with 1 day expiration
+            const date = new Date();
+            date.setTime(date.getTime() + (24 * 60 * 60 * 1000));
+            document.cookie = `admin_token=true; expires=${date.toUTCString()}; path=/`;
+
+            // Use window.location to force a full refresh and ensure Layout picks up the cookie
+            window.location.href = '/admin/produtos';
         } else {
             setError(true);
             setLoading(false);
