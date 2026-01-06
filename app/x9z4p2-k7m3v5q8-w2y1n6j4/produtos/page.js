@@ -52,7 +52,7 @@ export default function AdminProductsPage() {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <h1 style={{ fontSize: '1.8rem', color: '#2c3e50' }}>Gerenciar Produtos</h1>
-                <Link href="/admin/produtos/novo" className="btn-cta" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px' }}>
+                <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/produtos/novo" className="btn-cta" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px' }}>
                     <Plus size={20} /> Novo Produto
                 </Link>
             </div>
@@ -106,7 +106,7 @@ export default function AdminProductsPage() {
                                 </td>
                                 <td style={tdStyle} align="right">
                                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                                        <Link href={`/admin/produtos/editar/${product.id}`} style={actionBtnStyle} title="Editar">
+                                        <Link href={`/x9z4p2-k7m3v5q8-w2y1n6j4/produtos/editar/${product.id}`} style={actionBtnStyle} title="Editar">
                                             <Edit size={18} color="#2980b9" />
                                         </Link>
                                         <button onClick={() => handleDelete(product.id)} style={actionBtnStyle} title="Excluir">

@@ -63,6 +63,10 @@ export default function BannersAdminPage() {
         }
     };
 
+    // New Popup Component State Logic would be cleaner in a separate component, 
+    // but for speed I'll implement it inline or as a sub-component in this file.
+    // Let's create a sub-component at the bottom of the file.
+
     const handleCreateNew = () => {
         if (banners.length >= 6) {
             alert("Limite máximo de 6 banners atingido. Remova um banner existente para criar um novo.");
@@ -235,7 +239,8 @@ export default function BannersAdminPage() {
                         <ArrowLeft size={18} />
                     </button>
                     <div>
-                        <h1 style={{ margin: 0 }}>Gerenciar Banners</h1>
+                        <h1 style={{ margin: 0 }}>Banners e Pop-up</h1>
+                        <span style={{ fontSize: '0.9rem', color: '#666' }}>Gerencie o slider da home e o aviso inicial</span>
                         <span style={{ fontSize: '0.9rem', color: '#666' }}>{banners.length} / 6 banners</span>
                     </div>
                 </div>
@@ -245,6 +250,11 @@ export default function BannersAdminPage() {
                     </button>
                 )}
             </div>
+
+            {/* Popup Configuration Section */}
+            {!editingBanner && (
+                <PopupManagerSection />
+            )}
 
             {/* List View */}
             {!editingBanner && (

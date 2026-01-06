@@ -4,63 +4,41 @@ import { useState, useEffect } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
 export default function MaintenancePopup() {
-    const [isOpen, setIsOpen] = useState(false);
+    import React, { useState, useEffect } from 'react';
+    import { X } from 'lucide-react';
 
-    useEffect(() => {
-        // Open popup slightly after load
-        const timer = setTimeout(() => setIsOpen(true), 500);
-        return () => clearTimeout(timer);
-    }, []);
+    export default function GlobalPopup() {
+        const [config, setConfig] = useState(null);
+        const [visible, setVisible] = useState(false);
 
-    if (!isOpen) return null;
+        useEffect(() => {
+            // Fetch config on mount
+            const fetchConfig = async () => {
+                try {
+                    const res = await fetch('/api/popup-config');
+                    if (res.ok) {
+                        const data = await res.json();
+                        setConfig(data);
 
-    return (
-        <div
-            style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 9999,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                backdropFilter: 'blur(5px)'
-            }}
-            className="p-4"
-        >
-            <div
-                style={{
-                    maxWidth: '450px',
-                    width: '100%',
-                    background: '#fff',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-                }}
-                className="dark:bg-gray-900 border border-red-500/30"
-            >
+                        // Check if already seen in this session (unless it's maintenance, which always shows)
+                        const seen = sessionStorage.getItem('popup_seen');
 
-                {/* Header */}
-                <div className="bg-red-600 p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white font-bold text-lg">
-                        <AlertTriangle className="w-6 h-6" />
-                        <span>SITE EM MANUTENÇÃO</span>
-                    </div>
-                    <button
-                        onClick={() => setIsOpen(false)}
-                        className="text-white/80 hover:text-white hover:bg-red-700/50 rounded-full p-1 transition-colors"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
+                        if (data.active) {
+                            if (data.type === 'maintenance') {
+                                setVisible(true); // Always show maintenance
+                            } else if (!seen) {
+                                // Show promo with delay
+                                setTimeout(() => setVisible(true), 1000);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Popup config error", e);
+                }
+            };
+            fetchConfig();
+        }, []);
 
-                {/* Content */}
-                <div className="p-6 space-y-4 text-center">
-                    <div className="p-3 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-100 dark:border-red-900/20">
-                        <p className="text-red-700 dark:text-red-400 font-medium">
-                            🚧 Estamos realizando testes no sistema.
-                        </p>
-                    </div>
 
                     <div className="space-y-2 text-gray-600 dark:text-gray-300">
                         <p>
@@ -78,8 +56,8 @@ export default function MaintenancePopup() {
                     >
                         Entendido
                     </button>
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     );
-}
+    }
