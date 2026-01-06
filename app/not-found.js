@@ -1,4 +1,3 @@
-```javascript
 import Link from 'next/link'
 
 export default function NotFound() {
@@ -20,8 +19,8 @@ export default function NotFound() {
       <p style={{ fontSize: '1.2rem', color: '#333', marginBottom: '30px' }}>
         O endereço "admin" não existe mais. Use o link correto ou volte para a loja.
       </p>
-      <Link 
-        href="/" 
+      <Link
+        href="/"
         style={{
           padding: '12px 24px',
           backgroundColor: '#dc2626', // Vermelho
@@ -36,4 +35,4 @@ export default function NotFound() {
     </div>
   )
 }
-```
+
