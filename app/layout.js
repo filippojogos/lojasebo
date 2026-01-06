@@ -7,6 +7,7 @@ import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CartSidebar from "./components/CartSidebar";
+import MaintenancePopup from "./components/MaintenancePopup";
 
 export const metadata = {
   title: "Loja Sebo - O Melhor do Geek e Cultura",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
             <AuthProvider>
               <div className="min-h-screen flex flex-col">
                 <Header />
+                <MaintenancePopup />
                 <main className="flex-grow">
                   {children}
                 </main>
@@ -37,6 +39,6 @@ export default function RootLayout({ children }) {
           </CartProvider>
         </WishlistProvider>
       </body>
-    </html>
+    </html >
   );
 }
