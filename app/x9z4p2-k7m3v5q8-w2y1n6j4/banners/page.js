@@ -63,10 +63,6 @@ export default function BannersAdminPage() {
         }
     };
 
-    // New Popup Component State Logic would be cleaner in a separate component, 
-    // but for speed I'll implement it inline or as a sub-component in this file.
-    // Let's create a sub-component at the bottom of the file.
-
     const handleCreateNew = () => {
         if (banners.length >= 6) {
             alert("Limite máximo de 6 banners atingido. Remova um banner existente para criar um novo.");
@@ -98,6 +94,7 @@ export default function BannersAdminPage() {
             setLinkMode('product');
             setSelectedProductId(banner.link.split('/')[2] || '');
         } else if (banner.link && banner.link.startsWith('/categoria/')) {
+            setLinkMode('category');
             setLinkMode('category');
             // This is a bit heuristic, but sufficient for now
             // We won't pre-fill the select boxes perfectly for complex cases without more parsing logic
@@ -427,5 +424,112 @@ export default function BannersAdminPage() {
                 />
             )}
         </div>
+    );
+}
+
+function PopupManagerSection() {
+    const [config, setConfig] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        fetch('/api/popup-config')
+            .then(r => r.json())
+            .then(d => { setConfig(d); setLoading(false); })
+            .catch(() => setLoading(false));
+    }, []);
+
+    const handleSave = async () => {
+        setSaving(true);
+        await fetch('/api/popup-config', {
+            method: 'POST',
+            body: JSON.stringify(config)
+        });
+        setSaving(false);
+        alert('Configuração de Pop-up salva!');
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.url) setConfig({ ...config, imageUrl: data.url });
+        } catch (err) {
+            alert('Erro no upload da imagem');
+        }
+    };
+
+    if (loading && !config) return <div style={{ marginBottom: 20 }}>Carregando Popup Config...</div>;
+    // Safe default if fetch failed
+    if (!config) return null;
+
+    return (
+        <section style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', marginBottom: '30px', borderLeft: '5px solid #8e44ad' }}>
+            <h2 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>Pop-up Inicial / Aviso Global</h2>
+
+            <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '300px' }}>
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={config.active}
+                                onChange={e => setConfig({ ...config, active: e.target.checked })}
+                                style={{ transform: 'scale(1.5)' }}
+                            />
+                            Ativar Pop-up ao entrar no site
+                        </label>
+                    </div>
+
+                    <div style={{ paddingLeft: '20px', opacity: config.active ? 1 : 0.5, pointerEvents: config.active ? 'all' : 'none' }}>
+                        <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>Tipo de Pop-up:</p>
+                        <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <input
+                                    type="radio"
+                                    name="popupType"
+                                    checked={config.type === 'maintenance'}
+                                    onChange={() => setConfig({ ...config, type: 'maintenance' })}
+                                />
+                                Manutenção (Tela Bloqueada)
+                            </label>
+                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <input
+                                    type="radio"
+                                    name="popupType"
+                                    checked={config.type === 'image'}
+                                    onChange={() => setConfig({ ...config, type: 'image' })}
+                                />
+                                Imagem / Promoção (Fechável)
+                            </label>
+                        </div>
+
+                        {config.type === 'image' && (
+                            <div>
+                                <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>Imagem do Pop-up:</p>
+                                <div style={{ marginBottom: '10px' }}>
+                                    {config.imageUrl && (
+                                        <img src={config.imageUrl} style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', border: '1px solid #ddd', display: 'block', marginBottom: '10px' }} />
+                                    )}
+                                    <input type="file" onChange={handleImageUpload} accept="image/*" />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <button onClick={handleSave} className="btn-cta" disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Save size={18} /> {saving ? 'Salvando...' : 'Salvar Configuração'}
+                    </button>
+                </div>
+            </div>
+        </section>
     );
 }
