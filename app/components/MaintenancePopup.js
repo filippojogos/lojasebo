@@ -15,8 +15,31 @@ export default function MaintenancePopup() {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-red-500/30 animate-in zoom-in-95 duration-300">
+    return (
+        <div
+            style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                backdropFilter: 'blur(5px)'
+            }}
+            className="p-4"
+        >
+            <div
+                style={{
+                    maxWidth: '450px',
+                    width: '100%',
+                    background: '#fff',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                }}
+                className="dark:bg-gray-900 border border-red-500/30"
+            >
 
                 {/* Header */}
                 <div className="bg-red-600 p-4 flex items-center justify-between">
