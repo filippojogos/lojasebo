@@ -15,7 +15,8 @@ export default function AdminLogin() {
         e.preventDefault();
         setLoading(true);
         // Accept both passwords for backward compatibility/ease of use
-        if (password === 'sebo123' || password === 'admin123') {
+        // Strong password verification
+        if (password === 'X9$mK#7pL@2qR!5zW&') {
             // Set cookie with 1 day expiration
             const date = new Date();
             date.setTime(date.getTime() + (24 * 60 * 60 * 1000));
