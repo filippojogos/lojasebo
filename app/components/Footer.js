@@ -41,7 +41,7 @@ export default function Footer() {
                 </div>
             </div>
             <div className="copyright">
-                &copy; 2025 Loja Sebo. Todos os direitos reservados.
+                &copy; 2026 Loja Sebo. Todos os direitos reservados. <span style={{ fontSize: '0.6rem', color: '#ccc', marginLeft: 10 }}>v2.6 Deploy Fix</span>
             </div>
         </footer>
     );

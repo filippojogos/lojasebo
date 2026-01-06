@@ -71,3 +71,10 @@ model Banner {
   order     Int      @default(0)
   active    Boolean  @default(true)
 }
+
+model HomeConfig {
+  id                 Int      @id @default(autoincrement())
+  mainHighlights     String   @default("[]") // JSON List of IDs
+  categoryHighlights String   @default("{}") // JSON Object { "Livros": [1,2], ... }
+  updatedAt          DateTime @updatedAt
+}

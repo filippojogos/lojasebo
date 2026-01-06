@@ -1,43 +1,66 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import prisma from '../../lib/prisma';
 
-const configFilePath = path.join(process.cwd(), 'app/data/home-config.json');
-
-function getConfig() {
+// Helper to get or create config
+async function getConfig() {
     try {
-        if (!fs.existsSync(configFilePath)) {
-            return { mainHighlights: [], categoryHighlights: {} };
+        let config = await prisma.homeConfig.findFirst();
+        if (!config) {
+            config = await prisma.homeConfig.create({
+                data: {
+                    mainHighlights: '[]',
+                    categoryHighlights: '{}'
+                }
+            });
         }
-        const fileData = fs.readFileSync(configFilePath, 'utf8');
-        return JSON.parse(fileData);
-    } catch (error) {
-        console.error("Error reading home config:", error);
+        return {
+            mainHighlights: JSON.parse(config.mainHighlights),
+            categoryHighlights: JSON.parse(config.categoryHighlights)
+        };
+    } catch (e) {
+        console.error("HomeConfig Fetch Error:", e);
         return { mainHighlights: [], categoryHighlights: {} };
     }
 }
 
-function saveConfig(config) {
-    try {
-        fs.writeFileSync(configFilePath, JSON.stringify(config, null, 4));
-        return true;
-    } catch (error) {
-        console.error("Error saving home config:", error);
-        return false;
-    }
-}
-
 export async function GET() {
-    const config = getConfig();
+    const config = await getConfig();
     return NextResponse.json(config);
 }
 
 export async function POST(request) {
     try {
-        const newConfig = await request.json();
-        saveConfig(newConfig);
-        return NextResponse.json(newConfig);
+        const body = await request.json();
+        const { mainHighlights, categoryHighlights } = body;
+
+        // Upsert logic (update first found or create)
+        const existing = await prisma.homeConfig.findFirst();
+
+        let saved;
+        if (existing) {
+            saved = await prisma.homeConfig.update({
+                where: { id: existing.id },
+                data: {
+                    mainHighlights: JSON.stringify(mainHighlights || []),
+                    categoryHighlights: JSON.stringify(categoryHighlights || {})
+                }
+            });
+        } else {
+            saved = await prisma.homeConfig.create({
+                data: {
+                    mainHighlights: JSON.stringify(mainHighlights || []),
+                    categoryHighlights: JSON.stringify(categoryHighlights || {})
+                }
+            });
+        }
+
+        return NextResponse.json({
+            mainHighlights: JSON.parse(saved.mainHighlights),
+            categoryHighlights: JSON.parse(saved.categoryHighlights)
+        });
+
     } catch (error) {
+        console.error("HomeConfig Save Error:", error);
         return NextResponse.json({ error: 'Failed to update config' }, { status: 500 });
     }
 }

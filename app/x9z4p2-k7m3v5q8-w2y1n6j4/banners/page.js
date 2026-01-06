@@ -232,7 +232,7 @@ export default function BannersAdminPage() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <button onClick={() => router.push('/x9z4p2-k7m3v5q8-w2y1n6j4')} className="btn-outline">
+                    <button onClick={() => router.push('/x9z4p2-k7m3v5q8-w2y1n6j4/dashboard')} className="btn-outline">
                         <ArrowLeft size={18} />
                     </button>
                     <div>
