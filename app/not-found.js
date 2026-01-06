@@ -1,16 +1,39 @@
+```javascript
 import Link from 'next/link'
 
 export default function NotFound() {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">404 - Página Não Encontrada</h2>
-            <p className="text-lg text-gray-700 mb-8">Parece que o endereço que você digitou sumiu no espaço ou não existe.</p>
-            <Link
-                href="/"
-                className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors"
-            >
-                Voltar para a Loja
-            </Link>
-        </div>
-    )
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '60vh',
+      textAlign: 'center',
+      padding: '20px',
+      color: '#000000', // Preto absoluto
+      backgroundColor: '#ffffff'
+    }}>
+      <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '20px', color: '#000' }}>
+        404 - Página Não Encontrada
+      </h2>
+      <p style={{ fontSize: '1.2rem', color: '#333', marginBottom: '30px' }}>
+        O endereço "admin" não existe mais. Use o link correto ou volte para a loja.
+      </p>
+      <Link 
+        href="/" 
+        style={{
+          padding: '12px 24px',
+          backgroundColor: '#dc2626', // Vermelho
+          color: 'white',
+          fontWeight: 'bold',
+          borderRadius: '8px',
+          textDecoration: 'none'
+        }}
+      >
+        Voltar para a Loja
+      </Link>
+    </div>
+  )
 }
+```
