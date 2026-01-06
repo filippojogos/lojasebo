@@ -15,7 +15,6 @@ export default function MaintenancePopup() {
     if (!isOpen) return null;
 
     return (
-    return (
         <div
             style={{
                 position: 'fixed',
