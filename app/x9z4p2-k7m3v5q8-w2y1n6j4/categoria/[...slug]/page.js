@@ -77,7 +77,7 @@ export default function AdminCategoryPage({ params }) {
     const isCardGameRoot = params.slug?.[0] === 'card-game' && !params.slug?.[1];
 
     // Helper to allow navigation within admin
-    const adminLink = (path) => `/admin${path}`;
+    const adminLink = (path) => `/x9z4p2-k7m3v5q8-w2y1n6j4${path}`;
 
     // Video Game Specific Data
     const getNintendo = () => products.filter(p => p.subcategoria === 'Nintendo');
