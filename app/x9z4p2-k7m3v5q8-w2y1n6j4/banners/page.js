@@ -238,7 +238,9 @@ export default function BannersAdminPage() {
                     <div>
                         <h1 style={{ margin: 0 }}>Banners e Pop-up</h1>
                         <span style={{ fontSize: '0.9rem', color: '#666' }}>Gerencie o slider da home e o aviso inicial</span>
-                        <span style={{ fontSize: '0.9rem', color: '#666' }}>{banners.length} / 6 banners</span>
+                        <div style={{ marginTop: 5, fontSize: '0.9rem', color: banners.length >= 6 ? '#c0392b' : '#27ae60', fontWeight: 'bold' }}>
+                            ({banners.length} de 6) banners utilizados
+                        </div>
                     </div>
                 </div>
                 {!editingBanner && (

@@ -117,8 +117,7 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ marginTop: '50px', borderTop: '1px solid #eee', paddingTop: '30px' }}>
-                <h3 style={{ color: '#c0392b', marginBottom: '15px' }}>Zona de Perigo</h3>
-                <ResetButton />
+                {/* Zone removed requested by user */}
             </div>
         </div>
     );

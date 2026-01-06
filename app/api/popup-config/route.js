@@ -1,45 +1,63 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { NextResponse } from 'next/server';
+import prisma from '../../lib/prisma'; // Ensure correct path to your prisma instance
 
-const dataFilePath = path.join(process.cwd(), 'app/data/popup-config.json');
-
-// Ensure data dir exists
-async function ensureFile() {
-    try {
-        await fs.mkdir(path.join(process.cwd(), 'app/data'), { recursive: true });
-        try {
-            await fs.access(dataFilePath);
-        } catch {
-            // Default config
-            await fs.writeFile(dataFilePath, JSON.stringify({
+// Helper to get or create config
+async function getParams() {
+    let config = await prisma.popupConfig.findFirst();
+    if (!config) {
+        config = await prisma.popupConfig.create({
+            data: {
                 active: true,
-                type: 'maintenance', // 'maintenance' or 'image'
+                type: 'maintenance',
                 imageUrl: '',
                 linkUrl: ''
-            }, null, 2));
-        }
-    } catch (e) {
-        console.error("Error init popup config", e);
+            }
+        });
     }
+    return config;
 }
 
 export async function GET() {
-    await ensureFile();
     try {
-        const data = await fs.readFile(dataFilePath, 'utf8');
-        return new Response(data, { headers: { 'Content-Type': 'application/json' } });
+        const config = await getParams();
+        return NextResponse.json(config);
     } catch (e) {
-        return new Response(JSON.stringify({ active: false }), { status: 500 });
+        console.error("Popup GET error:", e);
+        return NextResponse.json({ error: 'Failed to fetch config' }, { status: 500 });
     }
 }
 
 export async function POST(req) {
-    await ensureFile();
     try {
         const body = await req.json();
-        await fs.writeFile(dataFilePath, JSON.stringify(body, null, 2));
-        return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
+        // Upsert logic: update the first record found, or create if none
+        const existing = await prisma.popupConfig.findFirst();
+
+        let result;
+        if (existing) {
+            result = await prisma.popupConfig.update({
+                where: { id: existing.id },
+                data: {
+                    active: body.active,
+                    type: body.type,
+                    imageUrl: body.imageUrl,
+                    linkUrl: body.linkUrl
+                }
+            });
+        } else {
+            result = await prisma.popupConfig.create({
+                data: {
+                    active: body.active,
+                    type: body.type,
+                    imageUrl: body.imageUrl,
+                    linkUrl: body.linkUrl
+                }
+            });
+        }
+
+        return NextResponse.json(result);
     } catch (e) {
-        return new Response(JSON.stringify({ error: 'Failed to save' }), { status: 500 });
+        console.error("Popup POST error:", e);
+        return NextResponse.json({ error: 'Failed to save config' }, { status: 500 });
     }
 }

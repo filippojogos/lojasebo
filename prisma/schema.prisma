@@ -51,3 +51,23 @@ model Order {
   
   items     String   // JSON string com os itens do pedido
 }
+
+model PopupConfig {
+  id        Int      @id @default(autoincrement())
+  active    Boolean  @default(true)
+  type      String   @default("maintenance") // 'maintenance' or 'image'
+  imageUrl  String?
+  linkUrl   String?
+  updatedAt DateTime @updatedAt
+}
+
+model Banner {
+  id        Int      @id @default(autoincrement())
+  title     String?
+  desc      String?
+  link      String?
+  image     String?
+  duration  Int      @default(5)
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+}

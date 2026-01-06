@@ -96,7 +96,7 @@ export default function AdminLayout({ children }) {
                         <PlusCircle size={20} /> Novo Produto
                     </Link>
                     <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/banners" style={navLinkStyle('/x9z4p2-k7m3v5q8-w2y1n6j4/banners')}>
-                        <LayoutGrid size={20} /> Banners (Topo)
+                        <LayoutGrid size={20} /> Banners e Pop-up
                     </Link>
                     <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/destaques" style={navLinkStyle('/x9z4p2-k7m3v5q8-w2y1n6j4/destaques')}>
                         <Package size={20} /> Vitrines (Home)
