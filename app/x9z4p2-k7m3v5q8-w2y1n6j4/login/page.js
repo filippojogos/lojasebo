@@ -23,7 +23,7 @@ export default function AdminLogin() {
             document.cookie = `admin_token=true; expires=${date.toUTCString()}; path=/`;
 
             // Use window.location to force a full refresh and ensure Layout picks up the cookie
-            window.location.href = '/admin/produtos';
+            window.location.href = '/x9z4p2-k7m3v5q8-w2y1n6j4/produtos';
         } else {
             setError(true);
             setLoading(false);

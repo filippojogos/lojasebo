@@ -94,7 +94,7 @@ export default function Header() {
 
   return (
     <>
-      {!pathname?.startsWith('/admin') && (
+      {!pathname?.startsWith('/x9z4p2-k7m3v5q8-w2y1n6j4') && (
         <header>
           <div className="navbar">
             {/* ... existing startup code ... */}
@@ -244,7 +244,7 @@ export default function Header() {
         </header>
       )}
 
-      <div className="categories-bar" style={pathname?.startsWith('/admin') ? { top: 0 } : {}}>
+      <div className="categories-bar" style={pathname?.startsWith('/x9z4p2-k7m3v5q8-w2y1n6j4') ? { top: 0 } : {}}>
         <div className="categories-container">
           {[
             { label: 'Livros', href: '/categoria/livros' },
@@ -273,8 +273,8 @@ export default function Header() {
               ]
             }
           ].map((cat) => {
-            const isAdmin = pathname?.startsWith('/admin');
-            const catHref = isAdmin ? `/admin${cat.href}` : cat.href;
+            const isAdmin = pathname?.startsWith('/x9z4p2-k7m3v5q8-w2y1n6j4');
+            const catHref = isAdmin ? `/x9z4p2-k7m3v5q8-w2y1n6j4${cat.href}` : cat.href;
 
             return (
               <div key={cat.label} className="category-item-container">
@@ -284,7 +284,7 @@ export default function Header() {
                 {cat.subcategories && (
                   <div className="category-dropdown">
                     {cat.subcategories.map(sub => {
-                      const subHref = isAdmin ? `/admin${sub.href}` : sub.href;
+                      const subHref = isAdmin ? `/x9z4p2-k7m3v5q8-w2y1n6j4${sub.href}` : sub.href;
                       return (
                         <Link key={sub.label} href={subHref} className="subcategory-link">
                           {sub.label}

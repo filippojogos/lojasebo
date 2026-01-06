@@ -16,8 +16,8 @@ export default function AdminLayout({ children }) {
     useEffect(() => {
         // Simple client-side auth check
         const hasToken = document.cookie.includes('admin_token=true');
-        if (!hasToken && pathname !== '/admin/login') {
-            router.push('/admin/login');
+        if (!hasToken && pathname !== '/x9z4p2-k7m3v5q8-w2y1n6j4/login') {
+            router.push('/x9z4p2-k7m3v5q8-w2y1n6j4/login');
         } else {
             setLoading(false);
         }
@@ -38,14 +38,14 @@ export default function AdminLayout({ children }) {
             }
         };
 
-        if (hasToken && pathname !== '/admin/login') {
+        if (hasToken && pathname !== '/x9z4p2-k7m3v5q8-w2y1n6j4/login') {
             fetchBadge();
         }
     }, [pathname]);
 
     if (loading) return null; // Or a spinner
 
-    if (pathname === '/admin/login') {
+    if (pathname === '/x9z4p2-k7m3v5q8-w2y1n6j4/login') {
         return <>{children}</>;
     }
 
@@ -68,16 +68,16 @@ export default function AdminLayout({ children }) {
                 </div>
 
                 <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <Link href="/admin/dashboard" style={navLinkStyle('/admin/dashboard')}>
+                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/dashboard" style={navLinkStyle('/x9z4p2-k7m3v5q8-w2y1n6j4/dashboard')}>
                         <LayoutGrid size={20} /> Dashboard
                     </Link>
-                    <Link href="/admin/produtos" style={navLinkStyle('/admin/produtos')}>
+                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/produtos" style={navLinkStyle('/x9z4p2-k7m3v5q8-w2y1n6j4/produtos')}>
                         <Package size={20} /> Produtos
                     </Link>
-                    <Link href="/admin/clientes" style={navLinkStyle('/admin/clientes')}>
+                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/clientes" style={navLinkStyle('/x9z4p2-k7m3v5q8-w2y1n6j4/clientes')}>
                         <LayoutGrid size={20} /> Clientes
                     </Link>
-                    <Link href="/admin/saida" style={navLinkStyle('/admin/saida')}>
+                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/saida" style={navLinkStyle('/x9z4p2-k7m3v5q8-w2y1n6j4/saida')}>
                         <Package size={20} /> Saída (Pedidos)
                         {pendingOrdersCount > 0 && (
                             <span style={{
@@ -92,13 +92,13 @@ export default function AdminLayout({ children }) {
 
                     <div style={{ height: '1px', background: '#34495e', margin: '10px 0' }}></div>
 
-                    <Link href="/admin/produtos/novo" style={navLinkStyle('/admin/produtos/novo')}>
+                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/produtos/novo" style={navLinkStyle('/x9z4p2-k7m3v5q8-w2y1n6j4/produtos/novo')}>
                         <PlusCircle size={20} /> Novo Produto
                     </Link>
-                    <Link href="/admin/banners" style={navLinkStyle('/admin/banners')}>
+                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/banners" style={navLinkStyle('/x9z4p2-k7m3v5q8-w2y1n6j4/banners')}>
                         <LayoutGrid size={20} /> Banners (Topo)
                     </Link>
-                    <Link href="/admin/destaques" style={navLinkStyle('/admin/destaques')}>
+                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/destaques" style={navLinkStyle('/x9z4p2-k7m3v5q8-w2y1n6j4/destaques')}>
                         <Package size={20} /> Vitrines (Home)
                     </Link>
                 </nav>
@@ -106,7 +106,7 @@ export default function AdminLayout({ children }) {
                 <button
                     onClick={() => {
                         document.cookie = "admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-                        router.push('/admin/login');
+                        router.push('/x9z4p2-k7m3v5q8-w2y1n6j4/login');
                     }}
                     style={{
                         marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '10px',

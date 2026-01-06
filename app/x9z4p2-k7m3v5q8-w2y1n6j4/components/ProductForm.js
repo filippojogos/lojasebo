@@ -163,7 +163,7 @@ export default function ProductForm({ initialData, isEdit }) {
 
             if (res.ok) {
                 alert(isEdit ? 'Produto atualizado!' : 'Produto criado!');
-                router.push('/admin/produtos');
+                router.push('/x9z4p2-k7m3v5q8-w2y1n6j4/produtos');
                 router.refresh();
             } else {
                 alert('Erro ao salvar produto');
