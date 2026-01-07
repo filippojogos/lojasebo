@@ -18,7 +18,12 @@ export async function POST(req) {
 
         const buffer = Buffer.from(await file.arrayBuffer());
         const filename = Date.now() + "_" + file.name.replaceAll(" ", "_");
-        const filePath = path.join(process.cwd(), 'public/uploads', filename);
+        const uploadDir = path.join(process.cwd(), 'public/uploads');
+        if (!fs.existsSync(uploadDir)) {
+            await fs.promises.mkdir(uploadDir, { recursive: true });
+        }
+
+        const filePath = path.join(uploadDir, filename);
 
         await fs.promises.writeFile(filePath, buffer);
 

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Package, Truck, Printer, AlertCircle, Trash2, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function OrdersPage() {
@@ -61,9 +62,9 @@ export default function OrdersPage() {
         <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'sans-serif' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <button onClick={() => router.push('/x9z4p2-k7m3v5q8-w2y1n6j4')} className="btn-outline">
+                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/dashboard" className="btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'inherit' }}>
                         <ArrowLeft size={18} />
-                    </button>
+                    </Link>
                     <div>
                         <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#2c3e50' }}>Saída (Envios)</h1>
                         <span style={{ fontSize: '0.9rem', color: '#666' }}>Gerencie as remessas e etiquetas</span>

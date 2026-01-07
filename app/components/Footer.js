@@ -41,7 +41,7 @@ export default function Footer() {
                 </div>
             </div>
             <div className="copyright">
-                &copy; 2026 Loja Sebo. Todos os direitos reservados. <span style={{ fontSize: '0.6rem', color: '#ccc', marginLeft: 10 }}>v2.7 Safe Mode</span>
+                &copy; 2026 Loja Sebo. Todos os direitos reservados. <span style={{ fontSize: '0.6rem', color: '#ccc', marginLeft: 10 }}>v2.8 Product Fixes</span>
             </div>
         </footer>
     );

@@ -114,6 +114,22 @@ export default function ProductForm({ initialData, isEdit }) {
         });
     };
 
+    const moveImage = (index, direction) => {
+        setFormData(prev => {
+            const newGaleria = [...prev.galeria];
+            if (direction === 'left' && index > 0) {
+                [newGaleria[index], newGaleria[index - 1]] = [newGaleria[index - 1], newGaleria[index]];
+            } else if (direction === 'right' && index < newGaleria.length - 1) {
+                [newGaleria[index], newGaleria[index + 1]] = [newGaleria[index + 1], newGaleria[index]];
+            }
+            return { ...prev, galeria: newGaleria, imagem: newGaleria[0] }; // Force 1st as cover or keep logic? User might want specific cover. Let's keep cover independent or sync? Usually 1st is cover.
+        });
+    };
+
+    const setCover = (url) => {
+        setFormData(prev => ({ ...prev, imagem: url }));
+    }
+
     const categories = [
         "Livros", "HQ´s", "Mangas",
         "CD´s", "VHS", "DVD´s", "Blue-Ray",
@@ -144,11 +160,11 @@ export default function ProductForm({ initialData, isEdit }) {
             ...formData,
             categoria: finalCategory,
             subcategoria: finalSubCategory,
-            preco: parseFloat(formData.preco),
-            estoque: parseInt(formData.estoque),
-            sku: 'N/A',
-            precoOriginal: 0,
-            tag: ''
+            preco: parseFloat(String(formData.preco).replace(',', '.')) || 0,
+            estoque: parseInt(formData.estoque) || 0,
+            sku: initialData?.sku || null,
+            precoOriginal: parseFloat(initialData?.precoOriginal) || null,
+            tag: initialData?.tag || null
         };
 
         try {
@@ -213,9 +229,16 @@ export default function ProductForm({ initialData, isEdit }) {
                     {/* Gallery Thumbs */}
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
                         {formData.galeria && formData.galeria.map((url, idx) => (
-                            <div key={idx} style={{ width: '60px', height: '60px', borderRadius: '4px', overflow: 'hidden', position: 'relative', border: url === formData.imagem ? '2px solid var(--deep-purple)' : '1px solid #ddd' }}>
-                                <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onClick={() => setFormData(prev => ({ ...prev, imagem: url }))} />
-                                <button type="button" onClick={() => removeImage(idx)} style={{ position: 'absolute', top: 0, right: 0, background: 'red', color: 'white', border: 'none', cursor: 'pointer', width: '15px', height: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>X</button>
+                            <div key={idx} style={{ width: '80px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <div style={{ height: '80px', borderRadius: '4px', overflow: 'hidden', position: 'relative', border: url === formData.imagem ? '3px solid #8e44ad' : '1px solid #ddd' }}>
+                                    <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onClick={() => setCover(url)} />
+                                    <button type="button" onClick={() => removeImage(idx)} style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(255,0,0,0.8)', color: 'white', border: 'none', cursor: 'pointer', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>X</button>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <button type="button" onClick={() => moveImage(idx, 'left')} disabled={idx === 0} style={{ flex: 1, border: '1px solid #ddd', background: '#f9f9f9', cursor: 'pointer', fontSize: '10px' }}>&lt;</button>
+                                    <button type="button" onClick={() => setCover(url)} style={{ flex: 2, border: '1px solid #ddd', background: url === formData.imagem ? '#8e44ad' : 'white', color: url === formData.imagem ? 'white' : 'black', cursor: 'pointer', fontSize: '10px' }}>Capa</button>
+                                    <button type="button" onClick={() => moveImage(idx, 'right')} disabled={idx === formData.galeria.length - 1} style={{ flex: 1, border: '1px solid #ddd', background: '#f9f9f9', cursor: 'pointer', fontSize: '10px' }}>&gt;</button>
+                                </div>
                             </div>
                         ))}
                     </div>
