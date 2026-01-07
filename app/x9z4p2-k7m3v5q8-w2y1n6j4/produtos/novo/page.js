@@ -6,7 +6,9 @@ import ProductForm from '../../components/ProductForm';
 export default function NewProductPage() {
     return (
         <div>
-            <h1 style={{ fontSize: '1.8rem', color: '#2c3e50', marginBottom: '30px' }}>Adicionar Novo Produto</h1>
+            <h1 style={{ fontSize: '1.8rem', color: '#2c3e50', marginBottom: '30px', borderBottom: '5px solid red', paddingBottom: '10px' }}>
+                Adicionar Novo Produto (DEBUG: v2.9)
+            </h1>
             <ProductForm />
         </div>
     );

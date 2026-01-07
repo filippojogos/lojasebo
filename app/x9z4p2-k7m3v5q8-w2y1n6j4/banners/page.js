@@ -54,7 +54,10 @@ export default function BannersAdminPage() {
                 fetch('/api/products')
             ]);
 
-            if (!resBanners.ok || !resProducts.ok) throw new Error("Erro na API");
+            if (!resBanners.ok || !resProducts.ok) {
+                const errText = await resBanners.text();
+                throw new Error("API Banners: " + errText);
+            }
 
             const bannersData = await resBanners.json();
             const productsData = await resProducts.json();
@@ -63,7 +66,7 @@ export default function BannersAdminPage() {
             setProducts(Array.isArray(productsData) ? productsData : []);
         } catch (error) {
             console.error("Erro ao carregar banners:", error);
-            alert("Erro ao carregar dados. Verifique o console.");
+            alert("Erro ao carregar banners: " + error.message);
         } finally {
             setLoading(false);
         }
