@@ -22,10 +22,23 @@ export default function DestaquesAdminPage() {
                     fetch('/api/home-config'),
                     fetch('/api/products')
                 ]);
-                setConfig(await resConfig.json());
-                setProducts(await resProducts.json());
+
+                if (resConfig.ok) {
+                    const cfg = await resConfig.json();
+                    setConfig({
+                        mainHighlights: Array.isArray(cfg.mainHighlights) ? cfg.mainHighlights : [],
+                        categoryHighlights: cfg.categoryHighlights || {}
+                    });
+                }
+
+                if (resProducts.ok) {
+                    const prods = await resProducts.json();
+                    setProducts(Array.isArray(prods) ? prods : []);
+                }
+
             } catch (e) {
-                console.error(e);
+                console.error("Error fetching destaques:", e);
+                alert("Erro ao carregar vitrine. Verifique console.");
             } finally {
                 setLoading(false);
             }

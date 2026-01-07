@@ -54,10 +54,16 @@ export default function BannersAdminPage() {
                 fetch('/api/products')
             ]);
 
-            setBanners(await resBanners.json());
-            setProducts(await resProducts.json());
+            if (!resBanners.ok || !resProducts.ok) throw new Error("Erro na API");
+
+            const bannersData = await resBanners.json();
+            const productsData = await resProducts.json();
+
+            setBanners(Array.isArray(bannersData) ? bannersData : []);
+            setProducts(Array.isArray(productsData) ? productsData : []);
         } catch (error) {
-            console.error(error);
+            console.error("Erro ao carregar banners:", error);
+            alert("Erro ao carregar dados. Verifique o console.");
         } finally {
             setLoading(false);
         }
@@ -232,9 +238,9 @@ export default function BannersAdminPage() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <button onClick={() => router.push('/x9z4p2-k7m3v5q8-w2y1n6j4/dashboard')} className="btn-outline">
+                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/dashboard" className="btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'inherit' }}>
                         <ArrowLeft size={18} />
-                    </button>
+                    </Link>
                     <div>
                         <h1 style={{ margin: 0 }}>Banners e Pop-up</h1>
                         <span style={{ fontSize: '0.9rem', color: '#666' }}>Gerencie o slider da home e o aviso inicial</span>

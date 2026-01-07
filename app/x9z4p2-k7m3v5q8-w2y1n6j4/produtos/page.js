@@ -16,10 +16,12 @@ export default function AdminProductsPage() {
     const fetchProducts = async () => {
         try {
             const res = await fetch('/api/products');
+            if (!res.ok) throw new Error("Erro API Produtos");
             const data = await res.json();
-            setProducts(data);
+            setProducts(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Failed to fetch products", error);
+            setProducts([]); // Prevent crash
         } finally {
             setLoading(false);
         }
