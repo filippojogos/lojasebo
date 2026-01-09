@@ -51,7 +51,7 @@ export async function GET() {
         return NextResponse.json(config, { status: 200 });
     } catch (e) {
         console.error("Popup GET error:", e);
-        return NextResponse.json({ error: 'Failed to fetch config' }, { status: 500 });
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
 
@@ -75,6 +75,6 @@ export async function POST(req) {
         return NextResponse.json(updated, { status: 200 });
     } catch (e) {
         console.error("Popup POST error:", e);
-        return NextResponse.json({ error: 'Failed to save config' }, { status: 500 });
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

@@ -9,7 +9,7 @@ export async function GET() {
         return NextResponse.json(banners);
     } catch (error) {
         console.error("Error fetching banners:", error);
-        return NextResponse.json({ error: 'Failed' }, { status: 500 });
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
@@ -27,7 +27,7 @@ export async function POST(request) {
         });
         return NextResponse.json(newBanner, { status: 201 });
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to create' }, { status: 500 });
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
@@ -56,7 +56,7 @@ export async function PUT(request) {
 
     } catch (error) {
         console.error("Banner update error:", error);
-        return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
@@ -70,6 +70,6 @@ export async function DELETE(request) {
         await prisma.banner.delete({ where: { id } });
         return NextResponse.json({ message: 'Deleted' });
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
