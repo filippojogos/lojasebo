@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
-import prisma from '../../lib/prisma'; // Ensure correct path to your prisma instance
+import prisma from '../../lib/prisma';
 
-// Helper to get or create config
+// Helper to get the SINGLETON config
 async function getParams() {
-    let config = await prisma.popupConfig.findFirst();
-    if (!config) {
-        config = await prisma.popupConfig.create({
+    // Busca todas as configs ordenadas por ID
+    const configs = await prisma.popupConfig.findMany({
+        orderBy: { id: 'asc' }
+    });
+
+    if (configs.length === 0) {
+        // Se não existir, cria a primeira
+        return await prisma.popupConfig.create({
             data: {
                 active: true,
                 type: 'maintenance',
@@ -14,13 +19,36 @@ async function getParams() {
             }
         });
     }
-    return config;
+
+    // Se houver mais de uma, mantém a primeira e deleta as outras (Auto-Clean)
+    if (configs.length > 1) {
+        const [keep, ...remove] = configs;
+        const idsToRemove = remove.map(c => c.id);
+
+        console.warn(`[PopupConfig] Found ${configs.length} configs. Cleaning up ${idsToRemove.length} duplicates...`);
+
+        try {
+            await prisma.popupConfig.deleteMany({
+                where: {
+                    id: { in: idsToRemove }
+                }
+            });
+        } catch (cleanupError) {
+            console.error("Popup cleanup failed (locked?):", cleanupError);
+            // Ignore error and continue to return 'keep'
+        }
+
+        return keep;
+    }
+
+    // Retorna a única existente
+    return configs[0];
 }
 
 export async function GET() {
     try {
         const config = await getParams();
-        return NextResponse.json(config);
+        return NextResponse.json(config, { status: 200 });
     } catch (e) {
         console.error("Popup GET error:", e);
         return NextResponse.json({ error: 'Failed to fetch config' }, { status: 500 });
@@ -30,32 +58,21 @@ export async function GET() {
 export async function POST(req) {
     try {
         const body = await req.json();
-        // Upsert logic: update the first record found, or create if none
-        const existing = await prisma.popupConfig.findFirst();
 
-        let result;
-        if (existing) {
-            result = await prisma.popupConfig.update({
-                where: { id: existing.id },
-                data: {
-                    active: body.active,
-                    type: body.type,
-                    imageUrl: body.imageUrl,
-                    linkUrl: body.linkUrl
-                }
-            });
-        } else {
-            result = await prisma.popupConfig.create({
-                data: {
-                    active: body.active,
-                    type: body.type,
-                    imageUrl: body.imageUrl,
-                    linkUrl: body.linkUrl
-                }
-            });
-        }
+        // Garante que estamos operando sobre a config correta (ou cria se não existir)
+        let currentConfig = await getParams();
 
-        return NextResponse.json(result);
+        const updated = await prisma.popupConfig.update({
+            where: { id: currentConfig.id },
+            data: {
+                active: body.active,
+                type: body.type,
+                imageUrl: body.imageUrl,
+                linkUrl: body.linkUrl
+            }
+        });
+
+        return NextResponse.json(updated, { status: 200 });
     } catch (e) {
         console.error("Popup POST error:", e);
         return NextResponse.json({ error: 'Failed to save config' }, { status: 500 });

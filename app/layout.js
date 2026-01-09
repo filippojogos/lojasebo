@@ -7,7 +7,7 @@ import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CartSidebar from "./components/CartSidebar";
-import MaintenancePopup from "./components/MaintenancePopup";
+import PopupDisplay from "./components/PopupDisplay";
 import VisitTracker from "./components/VisitTracker";
 
 const inter = Inter({ subsets: ['latin'] });
@@ -32,7 +32,7 @@ export default function RootLayout({ children }) {
               <VisitTracker />
               <div className="min-h-screen flex flex-col">
                 <Header />
-                <MaintenancePopup />
+                <PopupDisplay />
                 <main className="flex-grow">
                   {children}
                 </main>

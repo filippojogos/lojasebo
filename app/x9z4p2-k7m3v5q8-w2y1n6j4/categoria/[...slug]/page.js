@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { ChevronRight, ShoppingCart, Heart } from 'lucide-react';
 import { useWishlist } from '../../../context/WishlistContext';
 import ProductSection from '../../../components/ProductSection';
 import ProductCard from '../../../components/ProductCard';
 
-export default function AdminCategoryPage({ params }) {
+export default function AdminCategoryPage() {
+    const params = useParams();
     const [products, setProducts] = useState([]);
     const [categoryName, setCategoryName] = useState('');
     const [subCategoryName, setSubCategoryName] = useState('');
@@ -35,24 +36,31 @@ export default function AdminCategoryPage({ params }) {
                     'vhs': 'VHS'
                 };
 
+                // Logic to include subcategories in parent category
+                const CATEGORY_INCLUDES = {
+                    'video-game': ['Video Game', 'Nintendo', 'Xbox', 'Sony', 'Sega', 'PC'],
+                    'card-game': ['Card Game', 'Pokemon TCG', 'Yu-Gi-Oh!', 'Magic'],
+                    'hqs-mangas': ['HQ´s', 'Mangas', 'HQs & Mangás'],
+                    'dvds-blu-ray': ['DVD´s', 'Blue-Ray', 'DVDs & Blu-Ray'],
+                    'cds-de-musica': ['CD´s', 'CDs de Música']
+                };
+
                 const normalize = (str) => {
                     if (!str) return '';
                     return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
                 };
 
                 const filtered = allProducts.filter(p => {
-                    const pCat = normalize(p.categoria);
-                    const sCat = normalize(mainCatSlug);
-
-                    if (pCat !== sCat) return false;
+                    const pCat = p.categoria;
+                    const pSub = p.subcategoria;
 
                     if (subCatSlug) {
-                        const pSub = normalize(p.subcategoria);
-                        const sSub = normalize(subCatSlug);
-                        return pSub === sSub;
+                        return normalize(pSub) === normalize(subCatSlug);
+                    } else {
+                        const includesList = CATEGORY_INCLUDES[mainCatSlug];
+                        if (!includesList) return normalize(pCat) === normalize(mainCatSlug);
+                        return includesList.some(type => type === pCat || type === pSub);
                     }
-
-                    return true;
                 });
 
                 setProducts(filtered);

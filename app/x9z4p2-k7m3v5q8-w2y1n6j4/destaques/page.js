@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, X, Search, Save } from 'lucide-react';
+import { ArrowLeft, Plus, X, Search, Save, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+
+import Toast from '../../components/Toast';
 
 export default function DestaquesAdminPage() {
     const router = useRouter();
@@ -10,10 +12,34 @@ export default function DestaquesAdminPage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [toast, setToast] = useState({ message: '', type: '', visible: false });
 
     // Modal state for selecting products
     const [selectionModalOpen, setSelectionModalOpen] = useState(false);
     const [targetCategory, setTargetCategory] = useState(null); // 'main' or category name
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type, visible: true });
+        setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+    };
+
+    const [isRevalidating, setIsRevalidating] = useState(false);
+
+    const handleRevalidate = async () => {
+        setIsRevalidating(true);
+        try {
+            const res = await fetch('/api/revalidate?path=/');
+            if (res.ok) {
+                showToast("Site atualizado com sucesso!", 'success');
+            } else {
+                showToast("Erro ao atualizar", 'error');
+            }
+        } catch (e) {
+            showToast("Erro de conexão", 'error');
+        } finally {
+            setIsRevalidating(false);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -23,22 +49,39 @@ export default function DestaquesAdminPage() {
                     fetch('/api/products')
                 ]);
 
+                let loadedConfig = { mainHighlights: [], categoryHighlights: {} };
+                let loadedProducts = [];
+
                 if (resConfig.ok) {
                     const cfg = await resConfig.json();
-                    setConfig({
+                    loadedConfig = {
                         mainHighlights: Array.isArray(cfg.mainHighlights) ? cfg.mainHighlights : [],
                         categoryHighlights: cfg.categoryHighlights || {}
-                    });
+                    };
                 }
 
                 if (resProducts.ok) {
                     const prods = await resProducts.json();
-                    setProducts(Array.isArray(prods) ? prods : []);
+                    loadedProducts = Array.isArray(prods) ? prods : [];
+                    setProducts(loadedProducts);
                 }
+
+                // CLEANUP: Filter out "ghost" products that were deleted but still in config
+                const validMain = loadedConfig.mainHighlights.filter(id => loadedProducts.some(p => p.id === id));
+
+                const validCategories = {};
+                Object.keys(loadedConfig.categoryHighlights).forEach(cat => {
+                    validCategories[cat] = (loadedConfig.categoryHighlights[cat] || []).filter(id => loadedProducts.some(p => p.id === id));
+                });
+
+                setConfig({
+                    mainHighlights: validMain,
+                    categoryHighlights: validCategories
+                });
 
             } catch (e) {
                 console.error("Error fetching destaques:", e);
-                alert("Erro ao carregar vitrine. Verifique console.");
+                showToast("Erro ao carregar vitrine", 'error');
             } finally {
                 setLoading(false);
             }
@@ -53,10 +96,10 @@ export default function DestaquesAdminPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)
             });
-            if (res.ok) alert("Destaques atualizados!");
-            else alert("Erro ao salvar");
+            if (res.ok) showToast("Destaques atualizados!", 'success');
+            else showToast("Erro ao salvar", 'error');
         } catch (e) {
-            alert("Erro de conexão");
+            showToast("Erro de conexão", 'error');
         }
     };
 
@@ -154,17 +197,34 @@ export default function DestaquesAdminPage() {
 
     return (
         <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+            {toast.visible && <Toast message={toast.message} type={toast.type} onClose={() => setToast(prev => ({ ...prev, visible: false }))} />}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <button onClick={() => router.push('/x9z4p2-k7m3v5q8-w2y1n6j4')} className="btn-outline">
-                        <ArrowLeft size={18} />
-                    </button>
                     <h1 style={{ margin: 0 }}>Gerenciar Destaques</h1>
                 </div>
-                <button onClick={handleSave} className="btn-cta" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Save size={18} /> Salvar Alterações
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                        onClick={handleRevalidate}
+                        className="btn-outline"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#e67e22', borderColor: '#e67e22', cursor: 'pointer' }}
+                        disabled={isRevalidating}
+                    >
+                        <RefreshCw size={18} className={isRevalidating ? "spin" : ""} />
+                        {isRevalidating ? "Atualizando..." : "Atualizar Site"}
+                    </button>
+
+                    <button onClick={handleSave} className="btn-cta" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Save size={18} /> Salvar Alterações
+                    </button>
+                </div>
             </div>
+
+            <style jsx>{`
+                :global(.spin) {
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin { 100% { transform: rotate(360deg); } }
+            `}</style>
 
             {/* Main Highlights */}
             <section style={{ marginBottom: '40px', background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>

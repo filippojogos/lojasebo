@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Trash2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Toast from '../../components/Toast';
 
 const ITEMS_PER_PAGE = 50;
 
@@ -31,18 +32,31 @@ export default function CustomersPage() {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!confirm("Tem certeza que deseja apagar este cliente? Isso apagará também o histórico de pedidos dele.")) return;
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+    const [toast, setToast] = useState({ message: '', type: '', visible: false });
 
-        try {
-            const res = await fetch(`/api/users?id=${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                setCustomers(prev => prev.filter(c => c.id !== id));
-            } else {
-                alert("Erro ao apagar");
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type, visible: true });
+        setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+    };
+
+    const handleDelete = async (id) => {
+        if (confirmDeleteId === id) {
+            try {
+                const res = await fetch(`/api/users?id=${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    setCustomers(prev => prev.filter(c => c.id !== id));
+                    showToast("Cliente removido com sucesso", 'success');
+                    setConfirmDeleteId(null);
+                } else {
+                    showToast("Erro ao apagar cliente", 'error');
+                }
+            } catch (e) {
+                showToast("Erro de conexão", 'error');
             }
-        } catch (e) {
-            alert("Erro de conexão");
+        } else {
+            setConfirmDeleteId(id);
+            setTimeout(() => setConfirmDeleteId(null), 3000);
         }
     };
 
@@ -62,11 +76,9 @@ export default function CustomersPage() {
 
     return (
         <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+            {toast.visible && <Toast message={toast.message} type={toast.type} onClose={() => setToast(prev => ({ ...prev, visible: false }))} />}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
-                <button onClick={() => router.push('/x9z4p2-k7m3v5q8-w2y1n6j4')} className="btn-outline">
-                    <ArrowLeft size={18} />
-                </button>
+            <div style={{ marginBottom: '30px' }}>
                 <h1 style={{ fontSize: '1.8rem', color: '#2c3e50', margin: 0 }}>Gestão de Clientes</h1>
             </div>
 
@@ -115,7 +127,7 @@ export default function CustomersPage() {
                                     <div>{customer.telefone}</div>
                                     <div style={{ fontSize: '0.8rem', color: '#777' }}>{customer.email}</div>
                                 </td>
-                                <td style={tdStyle} style={{ maxWidth: '200px' }}>{customer.endereco_principal}</td>
+                                <td style={{ ...tdStyle, maxWidth: '200px' }}>{customer.endereco_principal}</td>
                                 <td style={tdStyle}>
                                     <span style={{ fontWeight: 'bold', color: '#27ae60' }}>
                                         R$ {customer.total_gasto.toFixed(2).replace('.', ',')}
@@ -125,10 +137,20 @@ export default function CustomersPage() {
                                 <td style={tdStyle}>
                                     <button
                                         onClick={() => handleDelete(customer.id)}
-                                        style={{ background: '#fff0f0', border: 'none', borderRadius: '4px', padding: '6px', cursor: 'pointer', color: 'red' }}
+                                        style={{
+                                            background: confirmDeleteId === customer.id ? '#d32f2f' : '#fff0f0',
+                                            border: confirmDeleteId === customer.id ? '1px solid #d32f2f' : 'none',
+                                            borderRadius: '4px',
+                                            padding: '6px 12px',
+                                            cursor: 'pointer',
+                                            color: confirmDeleteId === customer.id ? 'white' : 'red',
+                                            transition: 'all 0.2s',
+                                            minWidth: '32px',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        }}
                                         title="Excluir Cliente"
                                     >
-                                        <Trash2 size={16} />
+                                        {confirmDeleteId === customer.id ? <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Confirmar?</span> : <Trash2 size={16} />}
                                     </button>
                                 </td>
                             </tr>
@@ -141,30 +163,32 @@ export default function CustomersPage() {
             </div>
 
             {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                    <button
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="btn-outline"
-                        style={{ opacity: currentPage === 1 ? 0.5 : 1 }}
-                    >
-                        Anterior
-                    </button>
-                    <span style={{ display: 'flex', alignItems: 'center', fontWeight: 'bold', color: '#555' }}>
-                        Página {currentPage} de {totalPages}
-                    </span>
-                    <button
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="btn-outline"
-                        style={{ opacity: currentPage === totalPages ? 0.5 : 1 }}
-                    >
-                        Próxima
-                    </button>
-                </div>
-            )}
-        </div>
+            {
+                totalPages > 1 && (
+                    <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="btn-outline"
+                            style={{ opacity: currentPage === 1 ? 0.5 : 1 }}
+                        >
+                            Anterior
+                        </button>
+                        <span style={{ display: 'flex', alignItems: 'center', fontWeight: 'bold', color: '#555' }}>
+                            Página {currentPage} de {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="btn-outline"
+                            style={{ opacity: currentPage === totalPages ? 0.5 : 1 }}
+                        >
+                            Próxima
+                        </button>
+                    </div>
+                )
+            }
+        </div >
     );
 }
 

@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useState, useEffect } from "react";
 // import { getProducts } from "./data/products";
 import Link from "next/link";
@@ -40,7 +42,14 @@ export default function HomePage() {
     }
   ];
 
-  const slides = banners.length > 0 ? banners : defaultSlides;
+  const slides = banners;
+
+  // Ensure currentSlide is always valid when slides change
+  useEffect(() => {
+    if (slides.length > 0 && currentSlide >= slides.length) {
+      setCurrentSlide(0);
+    }
+  }, [slides, currentSlide]);
 
   useEffect(() => {
     async function fetchData() {
@@ -106,6 +115,10 @@ export default function HomePage() {
 
   const BannerContent = () => {
     const slide = slides[currentSlide];
+
+    // Safety check
+    if (!slide) return null;
+
     const hasText = slide.title || slide.desc;
 
     if (!hasText) return null;
@@ -121,20 +134,52 @@ export default function HomePage() {
   return (
     <div>
       {/* Hero Carousel */}
-      <section className="hero-section">
-        {/* ... (carousel code unchanged) ... */}
-        {slides[currentSlide]?.link ? (
-          <Link href={slides[currentSlide].link} style={{ textDecoration: 'none', color: 'inherit', width: '100%', display: 'block' }}>
-            <div className="hero-banner" style={{
-              background: slides[currentSlide].image ? `url(${slides[currentSlide].image}) center/cover no-repeat` : slides[currentSlide].bg || '#333',
-              transition: 'background 0.5s ease',
-              position: 'relative',
-              cursor: 'pointer'
-            }}>
-              {/* Overlay for readability if image exists */}
-              {slides[currentSlide].image && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1 }}></div>}
+      {slides.length > 0 && (
+        <section className="hero-section">
+          {slides[currentSlide]?.link ? (
+            <Link href={slides[currentSlide].link} style={{ textDecoration: 'none', color: 'inherit', width: '100%', display: 'block' }}>
+              <div className="hero-banner" style={{
+                background: slides[currentSlide].image ? `url(${slides[currentSlide].image}) center/cover no-repeat` : (slides[currentSlide].bgColor || slides[currentSlide].bg || '#333'),
+                transition: 'background 0.5s ease',
+                position: 'relative',
+                cursor: 'pointer'
+              }}>
+                {/* Overlay removido a pedido do usuário para manter cores originais */}
+                {/* {slides[currentSlide].image && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1 }}></div>} */}
 
-              <button className="carousel-control prev" onClick={(e) => { e.preventDefault(); e.stopPropagation(); prevSlide(); }} style={{ zIndex: 3 }}>
+                <button className="carousel-control prev" onClick={(e) => { e.preventDefault(); e.stopPropagation(); prevSlide(); }} style={{ zIndex: 3 }}>
+                  <ChevronLeft size={24} />
+                </button>
+
+                <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 20px', alignItems: 'center' }}>
+                  <BannerContent />
+                </div>
+
+                <button className="carousel-control next" onClick={(e) => { e.preventDefault(); e.stopPropagation(); nextSlide(); }} style={{ zIndex: 3 }}>
+                  <ChevronRight size={24} />
+                </button>
+
+                <div className="carousel-indicators" style={{ zIndex: 3 }}>
+                  {slides.map((_, index) => (
+                    <span
+                      key={index}
+                      className={`dot ${currentSlide === index ? 'active' : ''}`}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToSlide(index); }}
+                    ></span>
+                  ))}
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <div className="hero-banner" style={{
+              background: slides[currentSlide].image ? `url(${slides[currentSlide].image}) center/cover no-repeat` : (slides[currentSlide].bgColor || slides[currentSlide].bg || '#333'),
+              transition: 'background 0.5s ease',
+              position: 'relative'
+            }}>
+              {/* Overlay removido */}
+              {/* {slides[currentSlide].image && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1 }}></div>} */}
+
+              <button className="carousel-control prev" onClick={prevSlide} style={{ zIndex: 3 }}>
                 <ChevronLeft size={24} />
               </button>
 
@@ -142,7 +187,7 @@ export default function HomePage() {
                 <BannerContent />
               </div>
 
-              <button className="carousel-control next" onClick={(e) => { e.preventDefault(); e.stopPropagation(); nextSlide(); }} style={{ zIndex: 3 }}>
+              <button className="carousel-control next" onClick={nextSlide} style={{ zIndex: 3 }}>
                 <ChevronRight size={24} />
               </button>
 
@@ -151,45 +196,14 @@ export default function HomePage() {
                   <span
                     key={index}
                     className={`dot ${currentSlide === index ? 'active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToSlide(index); }}
+                    onClick={() => goToSlide(index)}
                   ></span>
                 ))}
               </div>
             </div>
-          </Link>
-        ) : (
-          <div className="hero-banner" style={{
-            background: slides[currentSlide].image ? `url(${slides[currentSlide].image}) center/cover no-repeat` : slides[currentSlide].bg || '#333',
-            transition: 'background 0.5s ease',
-            position: 'relative'
-          }}>
-            {/* Same structure but without Link wrapper, or just use Link="#"? Let's keep it clean. */}
-            {slides[currentSlide].image && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1 }}></div>}
-
-            <button className="carousel-control prev" onClick={prevSlide} style={{ zIndex: 3 }}>
-              <ChevronLeft size={24} />
-            </button>
-
-            <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 20px', alignItems: 'center' }}>
-              <BannerContent />
-            </div>
-
-            <button className="carousel-control next" onClick={nextSlide} style={{ zIndex: 3 }}>
-              <ChevronRight size={24} />
-            </button>
-
-            <div className="carousel-indicators" style={{ zIndex: 3 }}>
-              {slides.map((_, index) => (
-                <span
-                  key={index}
-                  className={`dot ${currentSlide === index ? 'active' : ''}`}
-                  onClick={() => goToSlide(index)}
-                ></span>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
+          )}
+        </section>
+      )}
 
       {/* Product Sections */}
       {products.length > 0 ? (

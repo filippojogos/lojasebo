@@ -58,41 +58,81 @@ export default function ProductForm({ initialData, isEdit }) {
         e.target.value = '';
     };
 
-    // 2. Recebe a imagem cortada e faz o upload
+    // Helper to compress and convert to Base64
+    const compressImage = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 1000;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress to JPEG 0.8
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    resolve(dataUrl);
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+        });
+    };
+
+    // 2. Recebe a imagem cortada, converte para Base64 (DB Storage)
     const handleCropComplete = async (croppedFile) => {
         setCropModalOpen(false);
         setUploading(true);
         setCurrentImageToCrop(null);
 
-        const data = new FormData();
-        data.append('file', croppedFile);
-
         try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: data
-            });
-            const json = await res.json();
-
-            if (json.url) {
-                setFormData(prev => {
-                    // Logic: Always sync 'imagem' (Cover) with the first item in 'galeria'.
-                    // If we add a new item, push it to galeria.
-                    // Then set 'imagem' to galeria[0].
-
-                    const currentGaleria = prev.galeria || [];
-                    const newGaleria = [...currentGaleria, json.url];
-
-                    return {
-                        ...prev,
-                        imagem: newGaleria[0], // Always first image
-                        galeria: newGaleria
-                    };
-                });
+            // Se o arquivo já vier como blob/file, converte. Se vier como base64 string, usa direto.
+            let base64Image;
+            if (typeof croppedFile === 'string') {
+                base64Image = croppedFile;
+            } else {
+                base64Image = await compressImage(croppedFile);
             }
+
+            setFormData(prev => {
+                const currentGaleria = prev.galeria || [];
+                // Se não tem imagem principal, a nova vira a principal. Se já tem, adiciona na galeria.
+                // Correção: Adiciona ao FINAL da galeria, mas se for a primeira, define como imagem principal também.
+                const newGaleria = [...currentGaleria, base64Image];
+
+                // Se imagem principal estiver vazia, define esta como principal
+                const newImagem = prev.imagem || base64Image;
+
+                return {
+                    ...prev,
+                    imagem: newImagem,
+                    galeria: newGaleria
+                };
+            });
         } catch (err) {
-            console.error("Upload failed", err);
-            alert("Falha ao enviar imagem.");
+            console.error("Image processing failed", err);
+            alert("Falha ao processar imagem.");
         } finally {
             setUploading(false);
         }
@@ -198,10 +238,7 @@ export default function ProductForm({ initialData, isEdit }) {
 
             {/* Action Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
-                <button type="button" onClick={() => router.back()} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <ArrowLeft size={18} /> Voltar
-                </button>
-                <div style={{ fontWeight: 'bold', color: '#555' }}>
+                <div style={{ fontWeight: 'bold', color: '#555', fontSize: '1.2rem' }}>
                     {isEdit ? `Editando: ${initialData.nome}` : 'Novo Produto'}
                 </div>
                 <button type="submit" className="btn-cta" disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 25px' }}>

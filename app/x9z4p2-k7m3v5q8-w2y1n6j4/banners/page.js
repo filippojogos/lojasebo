@@ -5,12 +5,17 @@ import { Trash2, Plus, GripVertical, Image as ImageIcon, Save, ArrowLeft } from 
 import { useRouter } from 'next/navigation';
 import ImageCropperModal from '../components/ImageCropperModal';
 
+import Toast from '../../components/Toast';
+
 export default function BannersAdminPage() {
     const router = useRouter();
     const [banners, setBanners] = useState([]);
     const [products, setProducts] = useState([]); // Store products for selection
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Toast State
+    const [toast, setToast] = useState({ message: '', type: '' });
 
     // Edit State
     const [editingBanner, setEditingBanner] = useState(null); // id of banner or 'new'
@@ -43,18 +48,30 @@ export default function BannersAdminPage() {
         }
     };
 
+    const [popupConfig, setPopupConfig] = useState({
+        active: true,
+        type: 'maintenance',
+        imageUrl: '',
+        linkUrl: ''
+    });
+
     useEffect(() => {
         fetchData();
     }, []);
 
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+    };
+
     const fetchData = async () => {
         try {
-            const [resBanners, resProducts] = await Promise.all([
+            const [resBanners, resProducts, resPopup] = await Promise.all([
                 fetch('/api/banners'),
-                fetch('/api/products')
+                fetch('/api/products'),
+                fetch('/api/popup-config')
             ]);
 
-            if (!resBanners.ok || !resProducts.ok) {
+            if (!resBanners.ok || !resProducts.ok) { // Popup might fail securely if not init, so we soft check
                 const errText = await resBanners.text();
                 throw new Error("API Banners: " + errText);
             }
@@ -62,19 +79,44 @@ export default function BannersAdminPage() {
             const bannersData = await resBanners.json();
             const productsData = await resProducts.json();
 
+            if (resPopup.ok) {
+                const popupData = await resPopup.json();
+                if (popupData) setPopupConfig(popupData);
+            }
+
             setBanners(Array.isArray(bannersData) ? bannersData : []);
             setProducts(Array.isArray(productsData) ? productsData : []);
         } catch (error) {
-            console.error("Erro ao carregar banners:", error);
-            alert("Erro ao carregar banners: " + error.message);
+            console.error("Erro ao carregar banners/popup:", error);
+            showToast("Erro ao carregar dados: " + error.message, 'error');
         } finally {
             setLoading(false);
         }
     };
 
+    const handleSavePopup = async () => {
+        try {
+            const res = await fetch('/api/popup-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(popupConfig)
+            });
+            if (res.ok) {
+                showToast("Configuração do Pop-up salva com sucesso!", 'success');
+                fetchData();
+            } else {
+                showToast("Erro ao salvar popup", 'error');
+            }
+        } catch (e) {
+            showToast("Erro de conexão", 'error');
+        }
+    };
+
+    // ... (rest of banner functions)
+
     const handleCreateNew = () => {
         if (banners.length >= 6) {
-            alert("Limite máximo de 6 banners atingido. Remova um banner existente para criar um novo.");
+            showToast("Limite máximo de 6 banners atingido.", 'error');
             return;
         }
 
@@ -104,8 +146,7 @@ export default function BannersAdminPage() {
             setSelectedProductId(banner.link.split('/')[2] || '');
         } else if (banner.link && banner.link.startsWith('/categoria/')) {
             setLinkMode('category');
-            setLinkMode('category');
-            // This is a bit heuristic, but sufficient for now
+            // Skipping edit, need to find file first.ic, but sufficient for now
             // We won't pre-fill the select boxes perfectly for complex cases without more parsing logic
             // User can just reset them if they want to change the link
         } else {
@@ -113,14 +154,29 @@ export default function BannersAdminPage() {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!confirm("Tem certeza que deseja remover este banner?")) return;
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-        try {
-            await fetch(`/api/banners?id=${id}`, { method: 'DELETE' });
-            fetchData(); // Refresh both to be safe
-        } catch (error) {
-            alert("Erro ao deletar");
+    const handleDelete = async (id) => {
+        if (confirmDeleteId === id) {
+            // Confirmado, executar deleção
+            try {
+                const res = await fetch(`/api/banners?id=${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || "Falha na resposta do servidor");
+                }
+                showToast("Banner removido com sucesso", 'success');
+                setConfirmDeleteId(null);
+                fetchData();
+            } catch (error) {
+                console.error("Erro ao deletar:", error);
+                showToast("Erro ao deletar banner: " + error.message, 'error');
+            }
+        } else {
+            // Primeira vez clicando
+            setConfirmDeleteId(id);
+            // Reseta após 3 segundos se não confirmar
+            setTimeout(() => setConfirmDeleteId(null), 3000);
         }
     };
 
@@ -169,12 +225,13 @@ export default function BannersAdminPage() {
 
             if (res.ok) {
                 setEditingBanner(null);
+                showToast("Banner salvo com sucesso!", 'success');
                 fetchData();
             } else {
-                alert("Erro ao salvar");
+                showToast("Erro ao salvar banner", 'error');
             }
         } catch (error) {
-            alert("Erro de conexão");
+            showToast("Erro de conexão", 'error');
         } finally {
             setIsSaving(false);
         }
@@ -207,7 +264,7 @@ export default function BannersAdminPage() {
                 setTempBannerData(prev => ({ ...prev, image: json.url }));
             }
         } catch (err) {
-            alert("Erro no upload");
+            showToast("Erro no upload da imagem", 'error');
         }
     };
 
@@ -241,12 +298,9 @@ export default function BannersAdminPage() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/dashboard" className="btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'inherit' }}>
-                        <ArrowLeft size={18} />
-                    </Link>
                     <div>
-                        <h1 style={{ margin: 0 }}>Banners e Pop-up</h1>
-                        <span style={{ fontSize: '0.9rem', color: '#666' }}>Gerencie o slider da home e o aviso inicial</span>
+                        <h1 style={{ margin: 0 }}>Gerenciar Banners</h1>
+                        <span style={{ fontSize: '0.9rem', color: '#666' }}>Gerencie o slider principal da página inicial</span>
                         <div style={{ marginTop: 5, fontSize: '0.9rem', color: banners.length >= 6 ? '#c0392b' : '#27ae60', fontWeight: 'bold' }}>
                             ({banners.length} de 6) banners utilizados
                         </div>
@@ -258,11 +312,6 @@ export default function BannersAdminPage() {
                     </button>
                 )}
             </div>
-
-            {/* Popup Configuration Section */}
-            {!editingBanner && (
-                <PopupManagerSection />
-            )}
 
             {/* List View */}
             {!editingBanner && (
@@ -290,11 +339,144 @@ export default function BannersAdminPage() {
 
                             <div style={{ display: 'flex', gap: '10px' }}>
                                 <button onClick={() => handleEdit(banner)} style={{ padding: '8px 15px', border: '1px solid #ddd', borderRadius: '4px', background: 'white', cursor: 'pointer' }}>Editar</button>
-                                <button onClick={() => handleDelete(banner.id)} style={{ padding: '8px', border: '1px solid #ffcccc', borderRadius: '4px', background: '#fff0f0', color: 'red', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                                <button onClick={() => handleDelete(banner.id)} style={{ padding: '8px', border: confirmDeleteId === banner.id ? '1px solid #d32f2f' : '1px solid #ffcccc', borderRadius: '4px', background: confirmDeleteId === banner.id ? '#d32f2f' : '#fff0f0', color: confirmDeleteId === banner.id ? 'white' : 'red', cursor: 'pointer', minWidth: '36px', transition: 'all 0.2s' }}>
+                                    {confirmDeleteId === banner.id ? <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Confirmar?</span> : <Trash2 size={16} />}
+                                </button>
                             </div>
                         </div>
                     ))}
-                    {banners.length === 0 && <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>Nenhum banner cadastrado.</div>}
+                </div>
+            )}
+
+            {/* Popup Configuration Section */}
+            {!editingBanner && (
+                <div style={{ marginTop: '50px', background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                    <h2 style={{ marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Configuração do Pop-up (Alerta/Promoção)</h2>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+                        <div>
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '10px' }}>Status do Pop-up</label>
+                                <div style={{ display: 'flex', gap: '20px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input
+                                            type="radio"
+                                            checked={popupConfig.active}
+                                            onChange={() => setPopupConfig({ ...popupConfig, active: true })}
+                                        />
+                                        <span style={{ color: '#27ae60', fontWeight: 'bold' }}>ATIVADO (Aparece no site)</span>
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input
+                                            type="radio"
+                                            checked={!popupConfig.active}
+                                            onChange={() => setPopupConfig({ ...popupConfig, active: false })}
+                                        />
+                                        <span style={{ color: '#c0392b' }}>DESATIVADO</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '10px' }}>Tipo de Pop-up</label>
+                                <select
+                                    value={popupConfig.type}
+                                    onChange={e => setPopupConfig({ ...popupConfig, type: e.target.value })}
+                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
+                                >
+                                    <option value="maintenance">⚠️ Aviso de Manutenção (Texto Padrão + Bloqueio Suave)</option>
+                                    <option value="image">🖼️ Imagem Promocional (Banner Flutuante)</option>
+                                </select>
+                            </div>
+
+                            {popupConfig.type === 'image' && (
+                                <>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Link de Redirecionamento (Opcional)</label>
+                                        <input
+                                            value={popupConfig.linkUrl || ''}
+                                            onChange={e => setPopupConfig({ ...popupConfig, linkUrl: e.target.value })}
+                                            placeholder="Ex: /produto/123 ou /categoria/promo"
+                                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
+                                        />
+                                        <small style={{ color: '#666' }}>Se preenchido, clicar na imagem levará a este link.</small>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div>
+                            {popupConfig.type === 'image' && (
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Imagem do Pop-up (Até 1000x1000px)</label>
+
+                                    <div style={{
+                                        width: '100%', height: '300px',
+                                        background: '#f9f9f9', border: '2px dashed #ddd',
+                                        borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        overflow: 'hidden', marginBottom: '10px', position: 'relative'
+                                    }}>
+                                        {popupConfig.imageUrl ? (
+                                            <img src={popupConfig.imageUrl} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                                        ) : (
+                                            <div style={{ color: '#999', textAlign: 'center' }}>
+                                                <ImageIcon size={40} />
+                                                <div style={{ marginTop: '10px' }}>Nenhuma imagem selecionada</div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <input
+                                        type="text"
+                                        placeholder="URL da Imagem..."
+                                        value={popupConfig.imageUrl || ''}
+                                        onChange={e => setPopupConfig({ ...popupConfig, imageUrl: e.target.value })}
+                                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', marginBottom: '10px' }}
+                                    />
+
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <input
+                                            type="file"
+                                            id="popupUpload"
+                                            style={{ display: 'none' }}
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const formData = new FormData();
+                                                    formData.append('file', file);
+                                                    try {
+                                                        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                                                        const json = await res.json();
+                                                        if (json.url) setPopupConfig(prev => ({ ...prev, imageUrl: json.url }));
+                                                    } catch (err) { showToast("Erro no upload", 'error'); }
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor="popupUpload" className="btn-outline" style={{ display: 'inline-block', padding: '10px 20px', cursor: 'pointer', textAlign: 'center', flex: 1 }}>
+                                            📤 Upload Imagem
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
+                            {popupConfig.type === 'maintenance' && (
+                                <div style={{ padding: '20px', background: '#fff3cd', borderRadius: '8px', color: '#856404', border: '1px solid #ffeeba' }}>
+                                    <strong>Modo Manutenção:</strong>
+                                    <p style={{ marginTop: '10px', fontSize: '0.9rem' }}>
+                                        O site exibirá um aviso de "Em Manutenção" para todos os visitantes.<br />
+                                        O aviso pode ser fechado para navegar, mas reaparecerá em novas sessões.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: '30px', textAlign: 'right' }}>
+                        <button onClick={handleSavePopup} className="btn-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 30px' }}>
+                            <Save size={18} /> Salvar Configuração do Pop-up
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -304,9 +486,22 @@ export default function BannersAdminPage() {
                     <h2 style={{ marginBottom: '20px' }}>{editingBanner === 'new' ? 'Criar Banner' : 'Editar Banner'}</h2>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '30px' }}>
-                        {/* Image */}
+                        {/* Image & Color */}
                         <div>
-                            <div style={{ height: '150px', background: '#f5f5f5', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', border: '2px dashed #ddd' }}>
+                            <div style={{ marginBottom: '15px' }}>
+                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '0.9rem' }}>Cor de Fundo (Se não houver imagem total)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <input
+                                        type="color"
+                                        value={tempBannerData.bgColor || '#333333'}
+                                        onChange={e => setTempBannerData({ ...tempBannerData, bgColor: e.target.value })}
+                                        style={{ width: '50px', height: '40px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                    />
+                                    <span style={{ fontSize: '0.9rem', color: '#666' }}>{tempBannerData.bgColor || '#333333'}</span>
+                                </div>
+                            </div>
+
+                            <div style={{ height: '150px', background: tempBannerData.image ? 'transparent' : (tempBannerData.bgColor || '#f5f5f5'), borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', border: '2px dashed #ddd' }}>
                                 {tempBannerData.image ? (
                                     <img src={tempBannerData.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
@@ -434,113 +629,14 @@ export default function BannersAdminPage() {
                     aspect={1920 / 600} // Banner aspect ratio (3.2:1)
                 />
             )}
+
+            {toast.message && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast({ message: '', type: '' })}
+                />
+            )}
         </div>
-    );
-}
-
-function PopupManagerSection() {
-    const [config, setConfig] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        fetch('/api/popup-config')
-            .then(r => r.json())
-            .then(d => { setConfig(d); setLoading(false); })
-            .catch(() => setLoading(false));
-    }, []);
-
-    const handleSave = async () => {
-        setSaving(true);
-        await fetch('/api/popup-config', {
-            method: 'POST',
-            body: JSON.stringify(config)
-        });
-        setSaving(false);
-        alert('Configuração de Pop-up salva!');
-    };
-
-    const handleImageUpload = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (data.url) setConfig({ ...config, imageUrl: data.url });
-        } catch (err) {
-            alert('Erro no upload da imagem');
-        }
-    };
-
-    if (loading && !config) return <div style={{ marginBottom: 20 }}>Carregando Popup Config...</div>;
-    // Safe default if fetch failed
-    if (!config) return null;
-
-    return (
-        <section style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', marginBottom: '30px', borderLeft: '5px solid #8e44ad' }}>
-            <h2 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>Pop-up Inicial / Aviso Global</h2>
-
-            <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '300px' }}>
-                    <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
-                            <input
-                                type="checkbox"
-                                checked={config.active}
-                                onChange={e => setConfig({ ...config, active: e.target.checked })}
-                                style={{ transform: 'scale(1.5)' }}
-                            />
-                            Ativar Pop-up ao entrar no site
-                        </label>
-                    </div>
-
-                    <div style={{ paddingLeft: '20px', opacity: config.active ? 1 : 0.5, pointerEvents: config.active ? 'all' : 'none' }}>
-                        <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>Tipo de Pop-up:</p>
-                        <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
-                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                <input
-                                    type="radio"
-                                    name="popupType"
-                                    checked={config.type === 'maintenance'}
-                                    onChange={() => setConfig({ ...config, type: 'maintenance' })}
-                                />
-                                Manutenção (Tela Bloqueada)
-                            </label>
-                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                <input
-                                    type="radio"
-                                    name="popupType"
-                                    checked={config.type === 'image'}
-                                    onChange={() => setConfig({ ...config, type: 'image' })}
-                                />
-                                Imagem / Promoção (Fechável)
-                            </label>
-                        </div>
-
-                        {config.type === 'image' && (
-                            <div>
-                                <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>Imagem do Pop-up:</p>
-                                <div style={{ marginBottom: '10px' }}>
-                                    {config.imageUrl && (
-                                        <img src={config.imageUrl} style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', border: '1px solid #ddd', display: 'block', marginBottom: '10px' }} />
-                                    )}
-                                    <input type="file" onChange={handleImageUpload} accept="image/*" />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                    <button onClick={handleSave} className="btn-cta" disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Save size={18} /> {saving ? 'Salvando...' : 'Salvar Configuração'}
-                    </button>
-                </div>
-            </div>
-        </section>
     );
 }

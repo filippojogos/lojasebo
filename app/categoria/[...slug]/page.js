@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { ChevronRight, ShoppingCart, Heart } from 'lucide-react';
 // import { getProducts } from '../../data/products';
 import { useWishlist } from '../../context/WishlistContext';
 import ProductSection from '../../components/ProductSection';
 import ProductCard from '../../components/ProductCard';
 
-export default function CategoryPage({ params }) {
+export default function CategoryPage() {
+    const params = useParams();
     const [products, setProducts] = useState([]);
     const [categoryName, setCategoryName] = useState('');
     const [subCategoryName, setSubCategoryName] = useState('');
@@ -36,24 +37,50 @@ export default function CategoryPage({ params }) {
                     'vhs': 'VHS'
                 };
 
+                // Logic to include subcategories in parent category
+                const CATEGORY_INCLUDES = {
+                    'video-game': ['Video Game', 'Nintendo', 'Xbox', 'Sony', 'Sega', 'PC'],
+                    'card-game': ['Card Game', 'Pokemon TCG', 'Yu-Gi-Oh!', 'Magic'],
+                    'hqs-mangas': ['HQ´s', 'Mangas', 'HQs & Mangás'],
+                    'dvds-blu-ray': ['DVD´s', 'Blue-Ray', 'DVDs & Blu-Ray'],
+                    'cds-de-musica': ['CD´s', 'CDs de Música']
+                };
+
                 const normalize = (str) => {
                     if (!str) return '';
                     return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
                 };
 
                 const filtered = allProducts.filter(p => {
-                    const pCat = normalize(p.categoria);
-                    const sCat = normalize(mainCatSlug);
+                    // Check logic: 
+                    // 1. If looking at main category (e.g. /categoria/video-game), 
+                    //    include products where category match OR subcategory is in list
 
-                    if (pCat !== sCat) return false;
+                    const pCat = p.categoria;
+                    const pSub = p.subcategoria;
 
                     if (subCatSlug) {
-                        const pSub = normalize(p.subcategoria);
-                        const sSub = normalize(subCatSlug);
-                        return pSub === sSub;
-                    }
+                        // Specific subcategory (e.g. /categoria/video-game/nintendo)
+                        // Must match subcategory exactly
+                        return normalize(pSub) === normalize(subCatSlug);
+                    } else {
+                        // Main Category View
+                        // Check if product belongs to this group
+                        const includesList = CATEGORY_INCLUDES[mainCatSlug];
 
-                    return true;
+                        // Default strict match if no group defined
+                        if (!includesList) {
+                            return normalize(pCat) === normalize(mainCatSlug);
+                        }
+
+                        // Check if product category OR subcategory matches any of the allowed types
+                        // Note: Data structure varies, some products have "Video Game" as category and "Nintendo" as sub.
+                        // Others might just have "Nintendo" as category? Assuming structure is:
+                        // Cat: Video Game, Sub: Nintendo
+                        // But verifying user request "subcategoria como categoria".
+
+                        return includesList.some(type => type === pCat || type === pSub);
+                    }
                 });
 
                 setProducts(filtered);

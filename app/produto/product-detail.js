@@ -4,10 +4,12 @@ import React, { useState, useEffect } from "react";
 // import { getProductById } from "../data/products";
 import { ShoppingCart, Heart, ChevronLeft, ChevronRight, Circle } from "lucide-react";
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 
 export default function ProductPage({ id }) {
+    const router = useRouter();
     const [product, setProduct] = useState(null);
     const [notFoundState, setNotFoundState] = useState(false);
     const { toggleWishlist, isInWishlist } = useWishlist();
@@ -116,6 +118,7 @@ export default function ProductPage({ id }) {
 
     return (
         <div className="product-detail-container">
+            {/* Back button removed */}
             <div className="breadcrumb">
                 <Link href="/">Home</Link> /
                 <span style={{ margin: '0 5px' }}>{product.categoria}</span> /
@@ -195,13 +198,7 @@ export default function ProductPage({ id }) {
                     </h1>
 
                     {/* Cleaned Info: No stars, just essential/rich info */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', color: '#666', fontSize: '0.9rem' }}>
-                        <span className="detail-sku">SKU: {product.sku}</span>
-                        <span>|</span>
-                        <span>{product.categoria}</span>
-                        <span>|</span>
-                        <span>{product.subcategoria || 'Geral'}</span>
-                    </div>
+                    {/* Meta info removed */}
 
                     <div className="price-box" style={{ marginBottom: '30px', padding: '20px', background: '#f9f9f9', borderRadius: '8px' }}>
                         <span className="current-price" style={{ fontSize: '2.5rem', color: 'var(--deep-purple)', fontWeight: 'bold' }}>

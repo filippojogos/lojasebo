@@ -4,10 +4,19 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Edit, Trash2, Search, Plus } from 'lucide-react';
 
+import Toast from '../../components/Toast';
+
 export default function AdminProductsPage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+    const [toast, setToast] = useState({ message: '', type: '', visible: false });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type, visible: true });
+        setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+    };
 
     useEffect(() => {
         fetchProducts();
@@ -22,24 +31,30 @@ export default function AdminProductsPage() {
         } catch (error) {
             console.error("Failed to fetch products", error);
             setProducts([]); // Prevent crash
+            showToast("Erro ao carregar produtos", 'error');
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Tem certeza que deseja excluir este produto?')) return;
-
-        try {
-            const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                alert('Produto excluído com sucesso!');
-                fetchProducts(); // Refresh list
-            } else {
-                alert('Erro ao excluir produto.');
+        if (confirmDeleteId === id) {
+            try {
+                const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('Produto excluído com sucesso!', 'success');
+                    fetchProducts(); // Refresh list
+                    setConfirmDeleteId(null);
+                } else {
+                    showToast('Erro ao excluir produto.', 'error');
+                }
+            } catch (error) {
+                console.error("Error deleting:", error);
+                showToast('Erro de conexão', 'error');
             }
-        } catch (error) {
-            console.error("Error deleting:", error);
+        } else {
+            setConfirmDeleteId(id);
+            setTimeout(() => setConfirmDeleteId(null), 3000);
         }
     };
 
@@ -52,6 +67,7 @@ export default function AdminProductsPage() {
 
     return (
         <div>
+            {toast.visible && <Toast message={toast.message} type={toast.type} onClose={() => setToast(prev => ({ ...prev, visible: false }))} />}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <h1 style={{ fontSize: '1.8rem', color: '#2c3e50' }}>Gerenciar Produtos</h1>
                 <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/produtos/novo" className="btn-cta" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px' }}>
@@ -111,8 +127,19 @@ export default function AdminProductsPage() {
                                         <Link href={`/x9z4p2-k7m3v5q8-w2y1n6j4/produtos/editar/${product.id}`} style={actionBtnStyle} title="Editar">
                                             <Edit size={18} color="#2980b9" />
                                         </Link>
-                                        <button onClick={() => handleDelete(product.id)} style={actionBtnStyle} title="Excluir">
-                                            <Trash2 size={18} color="#c0392b" />
+                                        <button
+                                            onClick={() => handleDelete(product.id)}
+                                            style={{
+                                                ...actionBtnStyle,
+                                                background: confirmDeleteId === product.id ? '#d32f2f' : 'transparent',
+                                                borderRadius: '4px',
+                                                color: confirmDeleteId === product.id ? 'white' : '#c0392b',
+                                                minWidth: '32px',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                            }}
+                                            title="Excluir"
+                                        >
+                                            {confirmDeleteId === product.id ? <span style={{ fontSize: '0.75rem', fontWeight: 'bold', padding: '0 5px' }}>Confirmar?</span> : <Trash2 size={18} color="#c0392b" />}
                                         </button>
                                     </div>
                                 </td>

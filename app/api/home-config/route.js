@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import prisma from '../../lib/prisma';
 
 // Helper to get or create config
@@ -53,6 +54,9 @@ export async function POST(request) {
                 }
             });
         }
+
+        // Auto-revalidate home
+        revalidatePath('/');
 
         return NextResponse.json({
             mainHighlights: JSON.parse(saved.mainHighlights),

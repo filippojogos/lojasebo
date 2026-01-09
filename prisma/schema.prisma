@@ -67,6 +67,7 @@ model Banner {
   desc      String?
   link      String?
   image     String?
+  bgColor   String?  @default("#333333")
   duration  Int      @default(5)
   order     Int      @default(0)
   active    Boolean  @default(true)

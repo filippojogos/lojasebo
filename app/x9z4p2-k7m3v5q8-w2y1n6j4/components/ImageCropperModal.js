@@ -29,13 +29,17 @@ const ImageCropperModal = ({ imageSrc, originalFile, onClose, onCropComplete, as
             setProcessing(true);
             const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
 
-            // Reconstroi um arquivo a partir do blob para manter compatibilidade
+            // Reconstroi um arquivo a partir do blob
             const file = new File([croppedImageBlob], "cropped-image.jpg", { type: "image/jpeg" });
-
             onCropComplete(file);
         } catch (e) {
-            console.error(e);
-            alert("Erro ao recortar imagem");
+            console.error("Crop error", e);
+            // Fallback: tenta passar o original se falhar o crop, ou alerta erro
+            if (originalFile) {
+                onCropComplete(originalFile);
+            } else {
+                alert("Erro ao recortar imagem. Tente novamente.");
+            }
         } finally {
             setProcessing(false);
         }

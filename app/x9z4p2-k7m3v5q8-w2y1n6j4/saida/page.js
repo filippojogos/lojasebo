@@ -62,9 +62,6 @@ export default function OrdersPage() {
         <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'sans-serif' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <Link href="/x9z4p2-k7m3v5q8-w2y1n6j4/dashboard" className="btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'inherit' }}>
-                        <ArrowLeft size={18} />
-                    </Link>
                     <div>
                         <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#2c3e50' }}>Saída (Envios)</h1>
                         <span style={{ fontSize: '0.9rem', color: '#666' }}>Gerencie as remessas e etiquetas</span>

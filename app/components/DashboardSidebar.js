@@ -24,6 +24,10 @@ export default function DashboardSidebar() {
                 </div>
             </div>
             <nav className="dashboard-nav">
+                <button onClick={logout} className="text-danger" style={{ background: 'none', border: '1px solid #ffcccc', borderRadius: '8px', width: '100%', cursor: 'pointer', padding: '12px 15px', fontSize: '1rem', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px', color: '#e74c3c' }}>
+                    <LogOut size={18} /> Sair
+                </button>
+
                 <Link href="/minha-conta/dados" className={isActive('/minha-conta/dados') ? 'active' : ''}>
                     <User size={18} /> Meus Dados
                 </Link>
@@ -42,11 +46,6 @@ export default function DashboardSidebar() {
                 <Link href="/minha-conta/deletar-conta" className={isActive('/minha-conta/deletar-conta') ? 'active' : ''} style={{ color: '#e74c3c' }}>
                     <Trash2 size={18} /> Deletar Conta
                 </Link>
-                <button onClick={logout} className="text-danger" style={{ background: 'none', border: 'none', width: '100%', cursor: 'pointer', padding: '12px 15px', fontSize: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <LogOut size={18} /> Sair
-                    </div>
-                </button>
             </nav>
         </aside>
     );
