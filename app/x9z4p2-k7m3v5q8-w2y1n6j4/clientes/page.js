@@ -101,8 +101,9 @@ export default function CustomersPage() {
                         <tr>
                             <th style={thStyle}>Cliente</th>
                             <th style={thStyle}>CPF</th>
-                            <th style={thStyle}>contato</th>
+                            <th style={thStyle}>Contato</th>
                             <th style={thStyle}>Endereço</th>
+                            <th style={thStyle}>Status Pedido</th>
                             <th style={thStyle}>Total Gasto</th>
                             <th style={thStyle}>Cadastro</th>
                             <th style={thStyle}>Ações</th>
@@ -127,7 +128,20 @@ export default function CustomersPage() {
                                     <div>{customer.telefone}</div>
                                     <div style={{ fontSize: '0.8rem', color: '#777' }}>{customer.email}</div>
                                 </td>
-                                <td style={{ ...tdStyle, maxWidth: '200px' }}>{customer.endereco_principal}</td>
+                                <td style={{ ...tdStyle, maxWidth: '200px', fontSize: '0.85rem' }}>{customer.endereco_principal}</td>
+                                <td style={tdStyle}>
+                                    <span style={{
+                                        padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold',
+                                        background: customer.status_ultimo_pedido === 'Sem Pedidos' ? '#eee' :
+                                            customer.status_ultimo_pedido === 'pago' ? '#d4edda' :
+                                                customer.status_ultimo_pedido === 'enviado' ? '#cce5ff' : '#fff3cd',
+                                        color: customer.status_ultimo_pedido === 'Sem Pedidos' ? '#777' :
+                                            customer.status_ultimo_pedido === 'pago' ? '#155724' :
+                                                customer.status_ultimo_pedido === 'enviado' ? '#004085' : '#856404'
+                                    }}>
+                                        {customer.status_ultimo_pedido?.toUpperCase()}
+                                    </span>
+                                </td>
                                 <td style={tdStyle}>
                                     <span style={{ fontWeight: 'bold', color: '#27ae60' }}>
                                         R$ {customer.total_gasto.toFixed(2).replace('.', ',')}

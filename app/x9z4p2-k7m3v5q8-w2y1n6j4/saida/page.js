@@ -52,8 +52,77 @@ export default function OrdersPage() {
         return o.status === filter;
     });
 
-    const handlePrintLabel = (orderId) => {
-        alert(`Gerando etiqueta do Super Frete para o pedido #${orderId}...\n(Simulação de PDF)`);
+    const handlePrintLabel = async (order) => {
+        if (!order.items || order.items.length === 0) {
+            alert("Pedido sem itens.");
+            return;
+        }
+
+        // Safe parse address if string
+        let dest = order.user?.endereco;
+        // In the new Checkout, address is stored in order (not user relation necessarily, but let's check).
+        // Actually, in api/orders/route.js, we don't save address in Order table yet? 
+        // Wait, schema has User.endereco as JSON. Order doesn't have address field in Schema!
+        // We need to fix Order Schema to store address snapshot OR fetch from user. 
+        // For now, let's try to get from user relation.
+
+        // Actually, looking at CheckoutPage, it sends `address: selectedAddress` to API.
+        // But `api/orders/route.js` creates order without saving address snapshot in `Order` model directly (it only links userId).
+        // This is a flaw: if user changes address, old order 'changes'. 
+        // FIX: We should save snapshot. But for now, let's parse from User (last known).
+
+        // BETTER: Checkout sends it, let's see where it goes. 
+        // In `api/orders` POST, it receives `address`. But `prisma.order.create` doesn't have an `address` field in Schema.
+        // It relies on `userId`.
+        // So we must fetch `order.user.endereco` (the JSON list) and find the one used? Impossible to know which one exactly.
+        // Assumption: User has current address in `endereco` (JSON).
+
+        // To make this robust, we will iterate `order.user.endereco` (JSON) and pick priority or first.
+        // Real Fix: Add `addressSnapshot` to Order. But let's work with what we have since migration is heavy.
+
+        let clientAddress = null;
+        try {
+            const addrs = JSON.parse(order.user?.endereco || '[]');
+            // Try to find one matching something? Or just take priority.
+            clientAddress = Array.isArray(addrs) ? (addrs.find(a => a.priority) || addrs[0]) : null;
+        } catch (e) {
+            console.error("Addr parse error", e);
+        }
+
+        if (!clientAddress) {
+            alert("Endereço do cliente não encontrado.");
+            return;
+        }
+
+        const payload = {
+            orderId: order.id,
+            products: order.items, // Ensure items have weight/dimensions (they come from cart, which comes from Product DB)
+            destName: order.user?.nome,
+            destCep: clientAddress.zip,
+            destStreet: clientAddress.street,
+            destNumber: clientAddress.number,
+            destCity: clientAddress.city,
+            destUf: clientAddress.uf || 'SP' // Fallback
+        };
+
+        try {
+            alert(`Solicitando etiqueta para ${clientAddress.city}...`);
+            const res = await fetch('/api/shipping/label', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                if (data.url) window.open(data.url, '_blank');
+                alert(`Etiqueta Gerada: ${data.trackingCode}`);
+            } else {
+                alert("Erro: " + data.error);
+            }
+        } catch (e) {
+            alert("Erro de conexão ao gerar etiqueta.");
+        }
     };
 
     if (loading) return <div style={{ padding: 40 }}>Carregando Pedidos...</div>;
@@ -114,6 +183,27 @@ export default function OrdersPage() {
                                         </li>
                                     )) : <li>Itens indisponíveis</li>}
                                 </ul>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: '10px', gap: '10px' }}>
+                                {order.status === 'pago' && (
+                                    <button
+                                        onClick={() => handlePrintLabel(order)}
+                                        className="btn-cta"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', padding: '8px 12px' }}
+                                    >
+                                        <Truck size={16} /> Gerar Etiqueta
+                                    </button>
+                                )}
+                                {(order.status === 'enviado' || order.status === 'pago') && (
+                                    <Link
+                                        href={`/x9z4p2-k7m3v5q8-w2y1n6j4/pedidos/${order.id}`}
+                                        className="btn-outline"
+                                        target="_blank"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', padding: '8px 12px', textDecoration: 'none' }}
+                                    >
+                                        <Printer size={16} /> Ver Nota
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>

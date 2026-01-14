@@ -12,10 +12,29 @@ export async function GET() {
         const formatted = users.map(u => {
             // Helper to safe parse JSON
             const safeParse = (str) => { try { return JSON.parse(str); } catch { return null; } };
-            const address = safeParse(u.endereco);
 
-            // Calculate total spent from real orders
-            const totalSpent = u.orders.reduce((acc, o) => acc + o.total, 0);
+            // Handle Address (Array or Single Object or Null)
+            let addressDisplay = 'N/A';
+            const rawAddress = safeParse(u.endereco);
+            if (Array.isArray(rawAddress) && rawAddress.length > 0) {
+                // Find priority or take first
+                const priority = rawAddress.find(a => a.priority) || rawAddress[0];
+                addressDisplay = `${priority.street}, ${priority.number} - ${priority.city}/${priority.uf || 'BR'}`;
+            } else if (rawAddress && !Array.isArray(rawAddress)) {
+                // Legacy support if stored as object
+                addressDisplay = `${rawAddress.cidade}/${rawAddress.uf}`;
+            }
+
+            // Calculate total spent only from PAID or SENT orders
+            const totalSpent = u.orders
+                .filter(o => o.status === 'pago' || o.status === 'enviado')
+                .reduce((acc, o) => acc + o.total, 0);
+
+            // Get Latest Order Status
+            // Sort orders in memory since we already fetched them (or could use take:1 in query for efficiency, but this is fine for now)
+            const sortedOrders = [...u.orders].sort((a, b) => new Date(b.data) - new Date(a.data));
+            const lastOrder = sortedOrders[0];
+            const lastStatus = lastOrder ? lastOrder.status : 'Sem Pedidos';
 
             return {
                 id: u.id,
@@ -23,8 +42,9 @@ export async function GET() {
                 email: u.email,
                 cpf: u.cpf || 'N/A',
                 telefone: u.telefone || 'N/A',
-                endereco_principal: address ? `${address.cidade}/${address.uf}` : 'N/A',
+                endereco_principal: addressDisplay,
                 total_gasto: totalSpent,
+                status_ultimo_pedido: lastStatus,
                 data_cadastro: u.createdAt
             };
         });

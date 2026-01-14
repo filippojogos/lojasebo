@@ -30,7 +30,7 @@ export default function DadosPage() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        updateUserData({ name: formData.name, email: formData.email });
+        updateUserData({ name: formData.name, email: formData.email, phone: formData.phone });
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
     };

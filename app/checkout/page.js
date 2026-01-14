@@ -128,13 +128,10 @@ export default function CheckoutPage() {
             if (res.ok) {
                 clearCart();
 
-                if (data.payment?.type === 'redirect') {
+                if (data.payment?.url) {
                     window.location.href = data.payment.url;
-                } else if (data.payment?.type === 'pix') {
-                    setPixData(data.payment);
-                    setShowSuccessModal(true);
                 } else {
-                    setShowSuccessModal(true);
+                    alert("Erro: Link de pagamento não gerado.");
                 }
             } else {
                 alert("Erro ao criar pedido: " + (data.error || "Tente novamente."));
@@ -283,27 +280,71 @@ export default function CheckoutPage() {
                         </div>
                     )}
 
-                    {/* 3. Pagamento */}
+                    {/* 3. Pagamento (Simplificado) */}
                     <div className="section-card" style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
                         <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.2rem' }}>
                             <CreditCard size={22} color="var(--primary-orange)" /> Pagamento
                         </h3>
-                        <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
-                            <div onClick={() => setMethod('pix')} className={`payment-method-card ${method === 'pix' ? 'active' : ''}`} style={{ flex: 1, padding: '15px', border: method === 'pix' ? '2px solid var(--primary-orange)' : '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', textAlign: 'center' }}>
-                                <QrCode size={24} style={{ marginBottom: '5px' }} />
-                                <div>Pix (-10%)</div>
-                            </div>
-                            <div onClick={() => setMethod('card')} className={`payment-method-card ${method === 'card' ? 'active' : ''}`} style={{ flex: 1, padding: '15px', border: method === 'card' ? '2px solid var(--primary-orange)' : '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', textAlign: 'center' }}>
-                                <CreditCard size={24} style={{ marginBottom: '5px' }} />
-                                <div>Cartão</div>
-                            </div>
-                            <div onClick={() => setMethod('boleto')} className={`payment-method-card ${method === 'boleto' ? 'active' : ''}`} style={{ flex: 1, padding: '15px', border: method === 'boleto' ? '2px solid var(--primary-orange)' : '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', textAlign: 'center' }}>
-                                <Ticket size={24} style={{ marginBottom: '5px' }} />
-                                <div>Boleto</div>
-                            </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', padding: '15px', border: method === 'pix' ? '2px solid var(--primary-orange)' : '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', background: method === 'pix' ? '#fff8f0' : 'white' }}>
+                                <input type="radio" name="paymentMethod" value="pix" checked={method === 'pix'} onChange={() => setMethod('pix')} style={{ marginRight: '15px' }} />
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <QrCode size={20} color={method === 'pix' ? 'var(--primary-orange)' : '#666'} />
+                                        <span style={{ fontWeight: 'bold' }}>Pix</span>
+                                        <span style={{ fontSize: '0.75rem', background: '#e8f5e9', color: '#2e7d32', padding: '2px 8px', borderRadius: '10px' }}>-10% OFF</span>
+                                    </div>
+                                    <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>
+                                        Aprovado na hora. Expira em 30 minutos.
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label style={{ display: 'flex', alignItems: 'center', padding: '15px', border: method === 'card' ? '2px solid var(--primary-orange)' : '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', background: method === 'card' ? '#fff8f0' : 'white' }}>
+                                <input type="radio" name="paymentMethod" value="card" checked={method === 'card'} onChange={() => setMethod('card')} style={{ marginRight: '15px' }} />
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <CreditCard size={20} color={method === 'card' ? 'var(--primary-orange)' : '#666'} />
+                                        <span style={{ fontWeight: 'bold' }}>Cartão de Crédito</span>
+                                    </div>
+                                    <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>
+                                        Em até 12x. Aprovação imediata.
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label style={{ display: 'flex', alignItems: 'center', padding: '15px', border: method === 'boleto' ? '2px solid var(--primary-orange)' : '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', background: method === 'boleto' ? '#fff8f0' : 'white' }}>
+                                <input type="radio" name="paymentMethod" value="boleto" checked={method === 'boleto'} onChange={() => setMethod('boleto')} style={{ marginRight: '15px' }} />
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Ticket size={20} color={method === 'boleto' ? 'var(--primary-orange)' : '#666'} />
+                                        <span style={{ fontWeight: 'bold' }}>Boleto Bancário</span>
+                                    </div>
+                                    <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>
+                                        Expira em 24h. Pode levar até 2 dias para aprovar.
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label style={{ display: 'flex', alignItems: 'center', padding: '15px', border: method === 'mercadopago' ? '2px solid var(--primary-orange)' : '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', background: method === 'mercadopago' ? '#fff8f0' : 'white' }}>
+                                <input type="radio" name="paymentMethod" value="mercadopago" checked={method === 'mercadopago'} onChange={() => setMethod('mercadopago')} style={{ marginRight: '15px' }} />
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        {/* Fallback Icon + Logo */}
+                                        <img
+                                            src="https://img.icons8.com/color/48/mercado-pago.png"
+                                            alt="MP"
+                                            style={{ height: '24px', width: '24px', objectFit: 'contain' }}
+                                        />
+                                        <span style={{ fontWeight: 'bold' }}>Conta Mercado Pago</span>
+                                    </div>
+                                    <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>
+                                        Use seu saldo ou cartões salvos no Mercado Pago.
+                                    </p>
+                                </div>
+                            </label>
                         </div>
-                        {method === 'pix' && <p style={{ fontSize: '0.9rem', color: '#666' }}>O código Pix será gerado na próxima tela.</p>}
-                        {method !== 'pix' && <p style={{ fontSize: '0.9rem', color: '#666' }}>Você será redirecionado para o Mercado Pago para concluir o pagamento.</p>}
                     </div>
                 </div>
 

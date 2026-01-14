@@ -1,7 +1,7 @@
 const { MercadoPagoConfig, Preference } = require('mercadopago');
 
 // Token de Teste encontrado no código
-const client = new MercadoPagoConfig({ accessToken: 'TEST-5396516642732009-092213-983df5a676c533a067605963b6038459-166296068' });
+const client = new MercadoPagoConfig({ accessToken: 'TEST-167855422731656-010418-8a531b1dbcd4c8081cad20038e6b84e0-139089034' });
 
 async function testPayment() {
     console.log("Iniciando teste de criação de preferência (Checkout)...");

@@ -2,8 +2,9 @@
 import { NextResponse } from 'next/server';
 
 // Configuration (In a real app, these should be environment variables)
-const SUPER_FRETE_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjcxMzg3MzMsInN1YiI6ImN0cHU1QXZPQ1FhTDhTclpzeTZnVXVCbU1jVzIifQ.5QsXa8qis1kIwTU48r59W3WDkvIUFwVScvuexpevTrA";
-const ORIGIN_CEP = "05458-001";
+// Configuration
+const SUPER_FRETE_TOKEN = process.env.SUPER_FRETE_TOKEN;
+const ORIGIN_CEP = process.env.ORIGIN_CEP || "05458-001";
 
 export async function POST(request) {
     try {
@@ -14,26 +15,21 @@ export async function POST(request) {
         }
 
         // Calculate total weight and dimensions
-        // Default values if product doesn't have them
         let totalWeight = 0;
         let totalHeight = 0;
         let totalWidth = 0;
         let totalLength = 0;
 
-        // Simple aggregation logic (stacking boxes)
-        // Adjust based on your actual packing logic
         products.forEach(p => {
             const qty = p.qty || 1;
-            // Assume minimal dimensions for books/games if not set
-            const w = p.peso || 0.3; // kg
-            const h = p.altura || 2; // cm
-            const wid = p.largura || 14; // cm
-            const len = p.comprimento || 20; // cm
+            // Use DB fields (weight, width, height, depth) or fallbacks
+            const w = p.weight || 0.3; // kg
+            const h = p.height || 2;   // cm
+            const wid = p.width || 11; // cm
+            const len = p.depth || 16; // cm (depth mapped to length for shipping)
 
             totalWeight += (w * qty);
-            totalHeight += (h * qty); // Stacking height
-            // Width and Length essentially take the max of the items if stacked, 
-            // but for simplicity let's just ensure we meet min requirements.
+            totalHeight += (h * qty);
             totalWidth = Math.max(totalWidth, wid);
             totalLength = Math.max(totalLength, len);
         });

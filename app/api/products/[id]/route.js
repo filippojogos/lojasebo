@@ -54,7 +54,12 @@ export async function PUT(request, { params }) {
         if (error.code === 'P2025') {
             return NextResponse.json({ error: 'Product not found' }, { status: 404 });
         }
-        return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Failed to update',
+            details: error.message,
+            code: error.code,
+            meta: error.meta
+        }, { status: 500 });
     }
 }
 

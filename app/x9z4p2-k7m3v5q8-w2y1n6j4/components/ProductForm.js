@@ -23,6 +23,10 @@ export default function ProductForm({ initialData, isEdit }) {
         galeria: [], // Extra images
         descricao: '',
         estoque: '',
+        weight: '0.3',
+        width: '15',
+        height: '5',
+        depth: '20',
         // Removed: SKU, Tag, PrecoOriginal
         ...initialData
     });
@@ -202,6 +206,10 @@ export default function ProductForm({ initialData, isEdit }) {
             subcategoria: finalSubCategory,
             preco: parseFloat(String(formData.preco).replace(',', '.')) || 0,
             estoque: parseInt(formData.estoque) || 0,
+            weight: parseFloat(formData.weight) || 0.3,
+            width: parseFloat(formData.width) || 15,
+            height: parseFloat(formData.height) || 5,
+            depth: parseFloat(formData.depth) || 20,
             sku: initialData?.sku || null,
             precoOriginal: parseFloat(initialData?.precoOriginal) || null,
             tag: initialData?.tag || null
@@ -353,6 +361,28 @@ export default function ProductForm({ initialData, isEdit }) {
                         </div>
                     </div>
 
+
+
+                    {/* Shipping Dimensions Row */}
+                    <div style={{ background: '#f0f4f8', padding: '15px', borderRadius: '8px', marginBottom: '25px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '100px' }}>
+                            <label style={labelStyle}>Peso (kg)</label>
+                            <input type="number" step="0.01" name="weight" value={formData.weight} onChange={handleChange} style={inputStyle} required />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '100px' }}>
+                            <label style={labelStyle}>Largura (cm)</label>
+                            <input type="number" name="width" value={formData.width} onChange={handleChange} style={inputStyle} required />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '100px' }}>
+                            <label style={labelStyle}>Altura (cm)</label>
+                            <input type="number" name="height" value={formData.height} onChange={handleChange} style={inputStyle} required />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '100px' }}>
+                            <label style={labelStyle}>Profundidade (cm)</label>
+                            <input type="number" name="depth" value={formData.depth} onChange={handleChange} style={inputStyle} required />
+                        </div>
+                    </div>
+
                     {/* Description Guide */}
                     <div style={{ background: '#fff3cd', color: '#856404', padding: '15px', borderRadius: '8px', marginBottom: '15px', fontSize: '0.9rem', border: '1px solid #ffeeba' }}>
                         <strong>⚠️ Detalhes Obrigatórios na Descrição:</strong>
@@ -378,15 +408,17 @@ export default function ProductForm({ initialData, isEdit }) {
                     </div>
                 </div>
             </div>
-            {cropModalOpen && (
-                <ImageCropperModal
-                    imageSrc={currentImageToCrop}
-                    originalFile={pendingFiles[0]}
-                    onClose={handleCropCancel}
-                    onCropComplete={handleCropComplete}
-                />
-            )}
-        </form>
+            {
+                cropModalOpen && (
+                    <ImageCropperModal
+                        imageSrc={currentImageToCrop}
+                        originalFile={pendingFiles[0]}
+                        onClose={handleCropCancel}
+                        onCropComplete={handleCropComplete}
+                    />
+                )
+            }
+        </form >
     );
 }
 

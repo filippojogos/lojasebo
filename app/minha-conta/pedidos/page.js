@@ -99,6 +99,27 @@ export default function PedidosPage() {
                                             <div style={{ fontWeight: 'bold', color: 'var(--primary-orange)' }}>
                                                 R$ {order.total.toFixed(2).replace('.', ',')}
                                             </div>
+
+                                            {/* Payment Badge */}
+                                            {order.pagamento && (order.status === 'pendente_pagamento' || order.status === 'pendente') && (
+                                                <div style={{ marginTop: '5px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px', color: '#666' }}>
+                                                    {order.pagamento === 'pix' && (
+                                                        <>
+                                                            <span style={{ fontWeight: 'bold' }}>Pix</span>
+                                                            <span style={{ color: '#e65100', background: '#fff3e0', padding: '2px 6px', borderRadius: '4px' }}>Expira em 30 min</span>
+                                                        </>
+                                                    )}
+                                                    {order.pagamento === 'boleto' && (
+                                                        <>
+                                                            <span style={{ fontWeight: 'bold' }}>Boleto</span>
+                                                            <span style={{ color: '#e65100', background: '#fff3e0', padding: '2px 6px', borderRadius: '4px' }}>Expira em 24h</span>
+                                                        </>
+                                                    )}
+                                                    {order.pagamento === 'card' && (
+                                                        <span>Cartão de Crédito</span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </>
                                     ) : (
                                         <span>Detalhes indisponíveis</span>
@@ -106,9 +127,11 @@ export default function PedidosPage() {
                                 </div>
 
                                 <div>
-                                    <Link href={`/minha-conta/pedidos/${order.id}`} className="btn-outline btn-outline-orange" style={{ fontSize: '0.9rem', padding: '8px 16px' }}>
-                                        Ver Detalhes
-                                    </Link>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-end' }}>
+                                        <Link href={`/minha-conta/pedidos/${order.id}`} className="btn-outline btn-outline-orange" style={{ fontSize: '0.9rem', padding: '8px 16px' }}>
+                                            Ver Detalhes
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         </div>

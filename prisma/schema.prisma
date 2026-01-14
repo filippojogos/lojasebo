@@ -21,6 +21,13 @@ model Product {
   rating        Float?
   estoque       Int      @default(1)
   galeria       String   // Armazenado como JSON string
+  
+  // Shipping Dimensions
+  weight        Float    @default(0.3) // kg
+  width         Float    @default(15)  // cm (Changed to Float)
+  height        Float    @default(5)   // cm (Changed to Float)
+  depth         Float    @default(20)  // cm (Changed to Float)
+
   createdAt     DateTime @default(now())
 }
 

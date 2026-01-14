@@ -37,9 +37,7 @@ export default function DashboardSidebar() {
                 <Link href="/minha-conta/enderecos" className={isActive('/minha-conta/enderecos') ? 'active' : ''}>
                     <MapPin size={18} /> Endereços
                 </Link>
-                <Link href="/minha-conta/carteira" className={isActive('/minha-conta/carteira') ? 'active' : ''}>
-                    <CreditCard size={18} /> Carteira
-                </Link>
+
                 <Link href="/favoritos" className={isActive('/favoritos') ? 'active' : ''}>
                     <Heart size={18} /> Favoritos
                 </Link>

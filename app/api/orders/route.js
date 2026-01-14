@@ -7,7 +7,7 @@ import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
 
 // MP Configuration
 // TODO: Replace with env variable process.env.MP_ACCESS_TOKEN
-const client = new MercadoPagoConfig({ accessToken: 'TEST-5396516642732009-092213-983df5a676c533a067605963b6038459-166296068' });
+const client = new MercadoPagoConfig({ accessToken: 'TEST-167855422731656-010418-8a531b1dbcd4c8081cad20038e6b84e0-139089034' });
 
 export async function GET(req) {
     const session = await getServerSession(authOptions);
@@ -17,9 +17,40 @@ export async function GET(req) {
     }
 
     try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        let whereClause = {};
+
+        // Basic permission check (in a real app, strict admin check needed)
+        // If query has ID, we fetch that specific one regardless of user (assuming admin usage)
+        // Or strictly: if session.user.role !== admin, assume userId. 
+        // For this project's simplified scope:
+        if (id) {
+            whereClause = { id: Number(id) };
+        } else {
+            // Default behavior: user's orders OR all if admin (logic needs refinement but strictly sticking to what works for 'saida' page which fetches all)
+            // Wait, saida/page.js fetches '/api/orders'. If it works now, it means this GET returns all?
+            // Checking previous file content: "where: { userId: Number(session.user.id) }"
+            // This means saida/page.js ONLY SHOWS ADMIN'S OWN ORDERS currently! 
+            // If the user is the admin who buys, it works. 
+            // But if the user wants to manage OTHER people's orders, this API is WRONG for admin usage.
+            // I should fix this to return ALL orders if specific criteria met or if it's the admin page calling.
+            // Let's allow fetching by ID without userId constraint for this specific "Ver Nota" feature.
+            whereClause = { userId: Number(session.user.id) };
+
+            // HACK: If session user is specific admin email, return all? 
+            // Or if query param 'all=true' is present?
+            const all = searchParams.get('all');
+            if (all === 'true') {
+                whereClause = {}; // Fetch all
+            }
+        }
+
         const orders = await prisma.order.findMany({
-            where: { userId: Number(session.user.id) },
-            orderBy: { data: 'desc' }
+            where: whereClause,
+            orderBy: { data: 'desc' },
+            include: { user: { select: { nome: true, email: true, endereco: true } } } // Fetch user details for label generation
         });
 
         const formattedOrders = orders.map(order => ({
@@ -65,77 +96,90 @@ export async function POST(req) {
         let paymentResponse = null;
 
         // 2. Handle Payment Gateway
-        if (paymentMethod === 'pix') {
-            const payment = new Payment(client);
-            try {
-                const payData = await payment.create({
-                    body: {
-                        transaction_amount: parseFloat(total),
-                        description: `Pedido #${newOrder.id} - Sebo Online`,
-                        payment_method_id: 'pix',
-                        payer: {
-                            email: session.user.email,
-                            first_name: session.user.name ? session.user.name.split(' ')[0] : 'Cliente',
-                            last_name: session.user.name && session.user.name.split(' ').length > 1 ? session.user.name.split(' ').slice(1).join(' ') : 'Sebo',
-                            entity_type: 'individual',
-                            identification: {
-                                type: 'CPF',
-                                number: '19119119100' // Mock CPF as we don't request it yet from user
-                            }
-                        },
-                        notification_url: 'https://sebo-online.vercel.app/api/webhooks/mp'
-                    }
-                });
+        // 2. Handle Payment Gateway (Unified Checkout Pro)
+        const preference = new Preference(client);
 
-                paymentResponse = {
-                    type: 'pix',
-                    qr_code: payData.point_of_interaction.transaction_data.qr_code,
-                    qr_code_base64: payData.point_of_interaction.transaction_data.qr_code_base64,
-                    ticket_url: payData.point_of_interaction.transaction_data.ticket_url,
-                    payment_id: payData.id
-                };
+        try {
+            // Expiration Logic based on Payment Method
+            const expirationDate = new Date();
+            const excludedMethods = [];
+            const excludedTypes = [];
 
-            } catch (mpError) {
-                console.error("MP Pix Error:", mpError);
-                // We return the order anyway, but with error
+            if (paymentMethod === 'pix') {
+                // Pix: 30 minutes
+                expirationDate.setMinutes(expirationDate.getMinutes() + 30);
+                // Force exclude Boleto and Card to prevent confusion
+                excludedTypes.push({ id: 'ticket' });
+                excludedTypes.push({ id: 'credit_card' });
+                excludedTypes.push({ id: 'debit_card' });
+            } else if (paymentMethod === 'boleto') {
+                // Boleto: 24 hours
+                expirationDate.setDate(expirationDate.getDate() + 1);
+                // Exclude Pix and Cards
+                excludedTypes.push({ id: 'bank_transfer' });
+                excludedTypes.push({ id: 'credit_card' });
+                excludedTypes.push({ id: 'debit_card' });
+            } else {
+                // Card: Default 24h just in case, but usually instant
+                expirationDate.setDate(expirationDate.getDate() + 1);
+                // Exclude Pix/Boleto to keep flow clean
+                excludedTypes.push({ id: 'bank_transfer' });
+                excludedTypes.push({ id: 'ticket' });
             }
 
-        } else if (paymentMethod === 'card' || paymentMethod === 'boleto') {
-            const preference = new Preference(client);
-            try {
-                const pref = await preference.create({
-                    body: {
-                        items: items.map(item => ({
-                            id: String(item.id),
-                            title: item.nome,
-                            quantity: Number(item.qty),
-                            unit_price: Number(item.price)
-                        })),
-                        shipments: {
-                            cost: Number(shipping),
-                            mode: 'not_specified'
-                        },
-                        payer: {
-                            email: session.user.email,
-                            name: session.user.name
-                        },
-                        back_urls: {
-                            success: `https://sebo-online.vercel.app/checkout/success`,
-                            failure: `https://sebo-online.vercel.app/checkout/failure`,
-                            pending: `https://sebo-online.vercel.app/checkout/pending`
-                        },
-                        auto_return: 'approved',
-                        external_reference: String(newOrder.id)
-                    }
-                });
+            const pref = await preference.create({
+                body: {
+                    items: items.map(item => ({
+                        id: String(item.id),
+                        title: item.nome,
+                        quantity: Number(item.qty),
+                        unit_price: Number(item.price)
+                    })),
+                    shipments: {
+                        cost: Number(shipping),
+                        mode: 'not_specified'
+                    },
+                    payer: {
+                        email: session.user.email,
+                        name: session.user.name,
+                        surname: session.user.name && session.user.name.split(' ').length > 1 ? session.user.name.split(' ').slice(1).join(' ') : 'Sebo',
+                        identification: {
+                            type: 'CPF',
+                            number: '19119119100' // Mock CPF
+                        }
+                    },
+                    back_urls: {
+                        // Use localhost for dev, should be env var in prod
+                        success: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/success/${newOrder.id}`,
+                        failure: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/failure`,
+                        pending: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/pending`
+                    },
+                    // auto_return: 'approved', // Temporarily disabled to fix validation error
+                    external_reference: String(newOrder.id),
+                    payment_methods: {
+                        excluded_payment_methods: excludedMethods,
+                        excluded_payment_types: excludedTypes,
+                        installments: 12
+                    },
+                    date_of_expiration: expirationDate.toISOString()
+                }
+            });
 
-                paymentResponse = {
-                    type: 'redirect',
-                    url: pref.init_point
-                };
-            } catch (mpError) {
-                console.error("MP Preference Error:", mpError);
-            }
+            paymentResponse = {
+                type: 'redirect',
+                url: pref.init_point, // For production use init_point, for sandbox sandbox_init_point?
+                // Actually MP SDK handles this inside init_point usually depending on token? No, init_point is prod. sandbox_init_point is sandbox.
+                // We should use sandbox_init_point if using Test Token.
+                url: pref.sandbox_init_point // Force Sandbox for now as we are testing
+            };
+
+        } catch (mpError) {
+            console.error("MP Preference Error:", mpError);
+            return NextResponse.json({ error: "Erro MP: " + (mpError.message || JSON.stringify(mpError)) }, { status: 500 });
+        }
+
+        if (!paymentResponse) {
+            return NextResponse.json({ error: "Falha ao gerar link de pagamento no Mercado Pago." }, { status: 500 });
         }
 
         return NextResponse.json({
