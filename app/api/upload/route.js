@@ -1,11 +1,4 @@
-
 import { NextResponse } from 'next/server';
-import path from 'path';
-import fs from 'fs';
-import { pipeline } from 'stream';
-import { promisify } from 'util';
-
-const pump = promisify(pipeline);
 
 export async function POST(req) {
     try {
@@ -16,21 +9,32 @@ export async function POST(req) {
             return NextResponse.json({ error: "No files received." }, { status: 400 });
         }
 
+        // Convert file to base64
         const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = Date.now() + "_" + file.name.replaceAll(" ", "_");
-        const uploadDir = path.join(process.cwd(), 'public/uploads');
-        if (!fs.existsSync(uploadDir)) {
-            await fs.promises.mkdir(uploadDir, { recursive: true });
+        const base64Image = buffer.toString('base64');
+
+        // ImgBB API Key (Environment variable with hardcoded fallback for immediate guaranteed deployment)
+        const apiKey = process.env.IMGBB_API_KEY || '3b10fb1e22e122426a2df96deb53c8b8';
+
+        const formDataImgBB = new FormData();
+        formDataImgBB.append('image', base64Image);
+
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            method: 'POST',
+            body: formDataImgBB,
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error ? data.error.message : 'Failed to upload to ImgBB');
         }
-
-        const filePath = path.join(uploadDir, filename);
-
-        await fs.promises.writeFile(filePath, buffer);
 
         return NextResponse.json({
             message: "Success",
-            url: `/uploads/${filename}`
+            url: data.data.url
         });
+
     } catch (error) {
         console.log("Error occurred ", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
