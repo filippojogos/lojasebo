@@ -89,7 +89,7 @@ model HomeConfig {
 
 model VisitorLog {
   id        Int      @id @default(autoincrement())
-  ipHash    String   @unique // Unique per day if we clear or scoped. Actually let's just log. Better: ipHash + day unique constraint?
+  ipHash    String
   // Let's just store simple logs and count unique ipHash where date = today in query.
   // Actually, to prevent massive table growth, let's keep it simple: dateString + ipHash unique
   

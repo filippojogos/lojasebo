@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import prisma from '../../../../lib/prisma'; // Adjust path if needed
+import prisma from '../../../../lib/prisma'; // Correct path if it's app/api/auth/recover/
 
 // In-memory store for codes (dev only) or use DB
 // Ideally store in DB table `PasswordResetToken`
