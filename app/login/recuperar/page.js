@@ -1,9 +1,9 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Lock, checkCircle } from 'lucide-react';
+import { Lock, CheckCircle } from 'lucide-react'; // Fixed checkCircle import case too if needed, usually Lucide is PascalCase 'CheckCircle'
 
-export default function RecoverPage() {
+function RecoverForm() {
     const searchParams = useSearchParams();
     const email = searchParams.get('email');
     const router = useRouter();
@@ -95,5 +95,18 @@ export default function RecoverPage() {
                 </button>
             </form>
         </div>
+    );
+}
+
+export default function RecoverPage() {
+    return (
+        <Suspense fallback={
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
+                <div style={{ width: '30px', height: '30px', border: '3px solid #eee', borderTop: '3px solid #333', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            </div>
+        }>
+            <RecoverForm />
+        </Suspense>
     );
 }
