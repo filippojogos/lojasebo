@@ -86,20 +86,58 @@ export default function DadosPage() {
                     <h3 style={{ marginBottom: '20px', color: 'var(--text-dark)' }}>Alterar Senha</h3>
                     <div className="form-group">
                         <label>Senha Atual</label>
-                        <input type="password" />
+                        <input
+                            type="password"
+                            value={formData.currentPassword || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                        />
                     </div>
                     <div className="form-group">
                         <label>Nova Senha</label>
-                        <input type="password" />
+                        <input
+                            type="password"
+                            value={formData.newPassword || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
+                        />
                     </div>
                     <button
                         type="button"
                         className="btn-outline"
                         style={{ marginTop: '10px' }}
-                        onClick={() => { setShowToast(true); setTimeout(() => setShowToast(false), 3000); }}
+                        onClick={async () => {
+                            if (!formData.currentPassword || !formData.newPassword) {
+                                alert("Preencha a senha atual e a nova senha.");
+                                return;
+                            }
+                            // Call updateUserData which calls /api/user/update
+                            // Note: updateUserData in context might not handle errors well (it returns true/false), 
+                            // so we rely on the backend error response if possible. 
+                            // But usually context catches errors. 
+                            // To be safer, let's call API directly or trust context.
+                            // Let's try calling updateUserData first since it handles session refresh.
+                            const success = await updateUserData({
+                                currentPassword: formData.currentPassword,
+                                newPassword: formData.newPassword
+                            });
+
+                            if (success) {
+                                setShowToast(true);
+                                setTimeout(() => setShowToast(false), 3000);
+                                setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '' })); // Clear fields
+                                alert("Senha alterada com sucesso!");
+                            } else {
+                                alert("Erro ao alterar senha. Verifique sua senha atual.");
+                            }
+                        }}
                     >
                         Atualizar Senha
                     </button>
+                    {/* Note: Ideally we should move password to its own form or separate state to avoid sending it with profile updates, 
+                        but since updateUserData sends everything, we need to be careful. 
+                        Actually, updateUserData sends `data` argument. 
+                        Wait, `handleSubmit` calls `updateUserData` with specific fields.
+                        So here we invoke `updateUserData` with ONLY password fields. Correct.
+                    */}
                 </div>
             </form>
 

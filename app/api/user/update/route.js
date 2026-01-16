@@ -37,9 +37,20 @@ export async function PATCH(request) {
             updateData.cartoes = JSON.stringify(data.cards);
         }
 
-        // Handle Password Update if provided
-        if (data.newPassword) {
-            // For password update, we should verify old password, but for simplicity/beta:
+        // Handle Password Update
+        if (data.newPassword && data.currentPassword) {
+            // Verify old password
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+
+            if (!user || !user.senha) {
+                return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            }
+
+            const isPasswordValid = await bcrypt.compare(data.currentPassword, user.senha);
+            if (!isPasswordValid) {
+                return NextResponse.json({ error: 'Senha atual incorreta' }, { status: 400 });
+            }
+
             const hashedPassword = await bcrypt.hash(data.newPassword, 10);
             updateData.senha = hashedPassword;
         }
