@@ -10,7 +10,7 @@ export default function DadosPage() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        phone: '(11) 99999-9999'
+        phone: ''
     });
 
     useEffect(() => {
@@ -18,7 +18,8 @@ export default function DadosPage() {
             setFormData(prev => ({
                 ...prev,
                 name: user.name || '',
-                email: user.email || ''
+                email: user.email || '',
+                phone: user.phone || ''
             }));
         }
     }, [user]);

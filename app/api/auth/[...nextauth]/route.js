@@ -20,6 +20,7 @@ export const authOptions = {
                 const user = await prisma.user.findUnique({
                     where: { email: credentials.email }
                 });
+                console.log("LOGIN DEBUG: User found", user?.nome, "Telefone:", user?.telefone);
 
                 if (!user || !user.senha) {
                     throw new Error("User not found");
@@ -45,6 +46,7 @@ export const authOptions = {
                     id: user.id.toString(),
                     name: user.nome || "Usuário",
                     email: user.email,
+                    phone: user.telefone, // Added phone
                     addresses: addresses || [],
                     cards: cards || []
                 };
@@ -57,18 +59,43 @@ export const authOptions = {
     },
     callbacks: {
         async jwt({ token, user, trigger, session }) {
+            // Initial Sign In
             if (user) {
                 token.id = user.id;
+                token.phone = user.phone;
                 token.addresses = user.addresses;
                 token.cards = user.cards;
             }
+
+            // Client-side Update Trigger
             if (trigger === "update" && session) {
-                // Allow updating token via client side update()
                 if (session.name) token.name = session.name;
                 if (session.email) token.email = session.email;
+                if (session.phone) token.phone = session.phone;
                 if (session.addresses) token.addresses = session.addresses;
                 if (session.cards) token.cards = session.cards;
             }
+
+            // Sync with Database on every check (Solves the F5 issue)
+            if (token && token.email) {
+                try {
+                    const freshUser = await prisma.user.findUnique({
+                        where: { email: token.email }
+                    });
+
+                    if (freshUser) {
+                        token.phone = freshUser.telefone;
+                        token.name = freshUser.nome;
+
+                        // Also sync JSON fields if needed
+                        if (freshUser.endereco) token.addresses = JSON.parse(freshUser.endereco);
+                        if (freshUser.cartoes) token.cards = JSON.parse(freshUser.cartoes);
+                    }
+                } catch (error) {
+                    console.error("Error syncing token with DB", error);
+                }
+            }
+
             return token;
         },
         async session({ session, token }) {
@@ -76,6 +103,7 @@ export const authOptions = {
                 session.user.id = token.id;
                 session.user.name = token.name;
                 session.user.email = token.email;
+                session.user.phone = token.phone; // Added phone
                 session.user.addresses = token.addresses;
                 session.user.cards = token.cards;
             }

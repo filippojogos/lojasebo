@@ -9,7 +9,8 @@ export default function DashboardPage() {
         totalProfit: 0,
         totalOrders: 0,
         totalCustomers: 0,
-        totalVisits: 0
+        totalVisits: 0,
+        todayVisits: 0
     });
     const [loading, setLoading] = useState(true);
 
@@ -26,11 +27,13 @@ export default function DashboardPage() {
 
                 // Fetch visits (safe fail)
                 let visits = 0;
+                let visitorsToday = 0;
                 try {
                     const vRes = await fetch('/api/stats');
                     if (vRes.ok) {
                         const vData = await vRes.json();
                         visits = vData.visits || 0;
+                        visitorsToday = vData.today || 0;
                     }
                 } catch (e) { }
 
@@ -43,7 +46,8 @@ export default function DashboardPage() {
                     totalProfit,
                     totalOrders: orders.length,
                     totalCustomers: users.length,
-                    totalVisits: visits
+                    totalVisits: visits,
+                    todayVisits: visitorsToday
                 });
 
             } catch (error) {
@@ -90,10 +94,16 @@ export default function DashboardPage() {
                     color="#8e44ad"
                 />
                 <StatCard
-                    title="Visitas Totais"
+                    title="Visitantes (Total)"
                     value={stats.totalVisits}
                     icon={Users}
                     color="#16a085"
+                />
+                <StatCard
+                    title="Visitantes (Hoje)"
+                    value={stats.todayVisits || 0}
+                    icon={Users}
+                    color="#1abc9c"
                 />
             </div>
 
